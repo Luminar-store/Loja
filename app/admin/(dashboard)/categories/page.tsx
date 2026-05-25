@@ -27,7 +27,11 @@ export default function CategoriesPage() {
   };
 
   useEffect(() => {
-    loadCategories();
+    const init = async () => {
+      await loadCategories();
+    };
+
+    init();
   }, []);
 
   const handleSave = async () => {

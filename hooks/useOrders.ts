@@ -50,7 +50,11 @@ export function useOrders() {
   }, []);
 
   useEffect(() => {
-    fetchOrders();
+    const init = async () => {
+      await fetchOrders();
+    };
+
+    init();
   }, [fetchOrders]);
 
   return { orders, loading, error, refetch: fetchOrders };

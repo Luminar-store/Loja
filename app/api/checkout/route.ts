@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
   let dbOptionValues: { id: string; price_modifier: number }[] = [];
   if (optionValueIds.length > 0) {
-    const { data: optValues, error: optValuesError } = await supabase
+    const { data: optValues, error: optValuesError } = await (supabase as any)
       .from('option_values')
       .select('id, price_modifier')
       .in('id', optionValueIds);
