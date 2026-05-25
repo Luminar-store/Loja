@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   // Verificar assinatura HMAC
   // NOTA: Se a InfinitePay não enviar assinatura, logar e permitir em dev, bloquear em prod
   if (signature) {
-    const isValid = verifyWebhookSignature(bodyText, signature, webhookSecret);
+    const isValid = verifyWebhookSignature(bodyText, signature, webhookSecret, timestamp);
     if (!isValid) {
       console.warn('[Webhook] Assinatura HMAC inválida — possível requisição forjada', {
         receivedSignature: signature?.substring(0, 20) + '...',
@@ -56,25 +56,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Payload inválido' }, { status: 400 });
   }
 
-  console.info('[Webhook] InfinitePay recebido', {
-    order_nsu: body.order_nsu,
-    capture_method: body.capture_method,
-    hasTransactionNsu: !!body.transaction_nsu,
-  });
-
-  const { invoice_slug, capture_method, transaction_nsu, order_nsu, receipt_url } = body as {
+  const { invoice_slug, capture_method, transaction_nsu, order_nsu, receipt_url, status } = body as {
     invoice_slug?: string;
     capture_method?: string;
     transaction_nsu?: string;
     order_nsu?: string;
     receipt_url?: string;
+    status?: string;
   };
+
+  console.info('[Webhook] InfinitePay recebido com sucesso', {
+    order_nsu,
+    status,
+    hasTransactionNsu: !!transaction_nsu,
+  });
 
   // ─────────────────────────────────────────────────
   // 3. VALIDAÇÃO DO order_nsu
   // ─────────────────────────────────────────────────
   if (!order_nsu || typeof order_nsu !== 'string') {
-    console.warn('[Webhook] Recebido sem order_nsu válido', { body });
+    console.warn('[Webhook] Recebido sem order_nsu válido');
     return NextResponse.json({ error: 'Missing order_nsu' }, { status: 400 });
   }
 
@@ -91,47 +92,89 @@ export async function POST(req: Request) {
     .single();
 
   if (orderError || !order) {
-    console.error('[Webhook] Pedido não encontrado', { order_nsu, error: orderError?.message });
+    console.error('[Webhook] Pedido não encontrado no banco de dados', { order_nsu, error: orderError?.message });
     return NextResponse.json({ error: 'Order not found' }, { status: 400 });
   }
 
   // ─────────────────────────────────────────────────
-  // 5. IDEMPOTÊNCIA — já processado?
+  // 5. TRATAMENTO IDEMPOTENTE & MÁQUINA DE STATUS
   // ─────────────────────────────────────────────────
-  if (order.payment_status === 'paid') {
-    console.info('[Webhook] Pedido já pago — idempotência ativada', { order_nsu });
-    return NextResponse.json({ success: true, message: 'Already processed' });
+  const currentStatus = (status || '').toLowerCase();
+
+  if (currentStatus === 'approved' || currentStatus === 'paid') {
+    // IDEMPOTÊNCIA: Evitar processar se já for pago
+    if (order.payment_status === 'paid') {
+      console.info('[Webhook] Pedido já marcado como pago. Idempotência ativada.', { order_nsu });
+      return NextResponse.json({ success: true, message: 'Already processed as paid' });
+    }
+
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({
+        payment_status: 'paid',
+        status: 'production',
+        capture_method: capture_method ?? null,
+        transaction_nsu: transaction_nsu ?? null,
+        invoice_slug: invoice_slug ?? null,
+        receipt_url: receipt_url ?? null,
+        paid_at: new Date().toISOString(),
+      })
+      .eq('order_nsu', order_nsu);
+
+    if (updateError) {
+      console.error('[Webhook] Erro ao atualizar pedido como pago no Supabase:', { order_nsu, error: updateError.message });
+      return NextResponse.json({ error: 'Error updating order' }, { status: 500 });
+    }
+
+    console.info('[Webhook] Pedido marcado como pago e em produção com sucesso', { order_nsu, transaction_nsu });
+    return NextResponse.json({ success: true, message: 'Payment approved' });
+
+  } else if (
+    currentStatus === 'cancelled' ||
+    currentStatus === 'refused' ||
+    currentStatus === 'refunded' ||
+    currentStatus === 'chargeback'
+  ) {
+    let targetPaymentStatus = 'failed';
+    let targetOrderStatus = 'cancelled';
+
+    if (currentStatus === 'refunded') {
+      targetPaymentStatus = 'refunded';
+    } else if (currentStatus === 'chargeback') {
+      targetPaymentStatus = 'chargeback';
+    }
+
+    // IDEMPOTÊNCIA: Evitar processar se já estiver no status correto
+    if (order.payment_status === targetPaymentStatus) {
+      console.info('[Webhook] Pedido já marcado com status de falha correspondente. Idempotência ativada.', { order_nsu, status: targetPaymentStatus });
+      return NextResponse.json({ success: true, message: `Already processed as ${targetPaymentStatus}` });
+    }
+
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({
+        payment_status: targetPaymentStatus,
+        status: targetOrderStatus,
+        capture_method: capture_method ?? null,
+        transaction_nsu: transaction_nsu ?? null,
+        invoice_slug: invoice_slug ?? null,
+      })
+      .eq('order_nsu', order_nsu);
+
+    if (updateError) {
+      console.error('[Webhook] Erro ao atualizar cancelamento do pedido no Supabase:', { order_nsu, error: updateError.message });
+      return NextResponse.json({ error: 'Error updating order cancellation' }, { status: 500 });
+    }
+
+    console.warn('[Webhook] Recebido status de cancelamento/falha. Pedido atualizado.', { order_nsu, status: targetPaymentStatus });
+    return NextResponse.json({ success: true, message: `Payment failed. Set to ${targetPaymentStatus}` });
+
+  } else if (currentStatus === 'pending') {
+    console.info('[Webhook] Transação pendente. Aguardando processamento.', { order_nsu });
+    return NextResponse.json({ success: true, message: 'Transaction is pending' });
+
+  } else {
+    console.warn('[Webhook] Status do gateway desconhecido ou não mapeado:', { order_nsu, status: currentStatus });
+    return NextResponse.json({ success: true, message: 'Status ignored' });
   }
-
-  // ─────────────────────────────────────────────────
-  // 6. ATUALIZAR PEDIDO
-  // ─────────────────────────────────────────────────
-  const { error: updateError } = await supabase
-    .from('orders')
-    .update({
-      payment_status: 'paid',
-      status: 'production',
-      capture_method: capture_method ?? null,
-      transaction_nsu: transaction_nsu ?? null,
-      invoice_slug: invoice_slug ?? null,
-      receipt_url: receipt_url ?? null,
-      paid_at: new Date().toISOString(),
-    })
-    .eq('order_nsu', order_nsu);
-
-  if (updateError) {
-    console.error('[Webhook] Erro ao atualizar pedido', {
-      order_nsu,
-      error: updateError.message,
-    });
-    return NextResponse.json({ error: 'Error updating order' }, { status: 500 });
-  }
-
-  console.info('[Webhook] Pedido atualizado com sucesso', {
-    order_nsu,
-    capture_method,
-    status: 'production',
-  });
-
-  return NextResponse.json({ success: true });
 }

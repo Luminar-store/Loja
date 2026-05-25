@@ -13,7 +13,30 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 
 export async function POST(req: Request) {
   // ─────────────────────────────────────────────────
-  // 1. PARSE & VALIDAÇÃO ZOD
+  // 1. VALIDAR VARIÁVEIS DE AMBIENTE OBRIGATÓRIAS
+  // ─────────────────────────────────────────────────
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const handle = process.env.INFINITEPAY_HANDLE;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const webhookSecret = process.env.INFINITEPAY_WEBHOOK_SECRET;
+
+  if (!siteUrl || !handle || !supabaseUrl || !serviceRoleKey || !webhookSecret) {
+    const missing = [];
+    if (!siteUrl) missing.push('NEXT_PUBLIC_SITE_URL');
+    if (!handle) missing.push('INFINITEPAY_HANDLE');
+    if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL');
+    if (!serviceRoleKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+    if (!webhookSecret) missing.push('INFINITEPAY_WEBHOOK_SECRET');
+    console.error(`[Checkout] Configurações do servidor inválidas. Variáveis ausentes: ${missing.join(', ')}`);
+    return NextResponse.json(
+      { error: `Configuração do servidor incompleta. Variáveis ausentes: ${missing.join(', ')}` },
+      { status: 500 }
+    );
+  }
+
+  // ─────────────────────────────────────────────────
+  // 2. PARSE & VALIDAÇÃO ZOD
   // ─────────────────────────────────────────────────
   let rawBody: unknown;
   try {
@@ -34,12 +57,12 @@ export async function POST(req: Request) {
   const { cartItems, customer, shipping, shippingAddress } = parsed.data;
 
   // ─────────────────────────────────────────────────
-  // 2. USAR SERVICE ROLE (bypass RLS)
+  // 3. USAR SERVICE ROLE (bypass RLS)
   // ─────────────────────────────────────────────────
   const supabase = createAdminClient();
 
   // ─────────────────────────────────────────────────
-  // 3. BUSCAR TODOS OS PRODUTOS EM UMA ÚNICA QUERY (anti N+1)
+  // 4. BUSCAR TODOS OS PRODUTOS EM UMA ÚNICA QUERY (anti N+1)
   // ─────────────────────────────────────────────────
   const productIds = cartItems.map((item) => item.id);
   const { data: products, error: productsError } = await supabase
@@ -52,7 +75,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Erro ao validar produtos' }, { status: 500 });
   }
 
-  // 3.1 Buscar todos os modificadores de variação na tabela option_values (anti N+1)
+  // 4.1 Buscar todos os modificadores de variação na tabela option_values (anti N+1)
   const optionValueIds = cartItems
     .flatMap((item) => item.options?.map((opt) => opt.value_id) || [])
     .filter(Boolean);
@@ -81,7 +104,7 @@ export async function POST(req: Request) {
   const productMap = new Map(products.map((p) => [p.id, p]));
 
   // ─────────────────────────────────────────────────
-  // 4. VALIDAR PREÇOS SERVER-SIDE
+  // 5. VALIDAR PREÇOS SERVER-SIDE
   // ─────────────────────────────────────────────────
   let subtotal = 0;
   const validItems: typeof cartItems = [];
@@ -163,77 +186,11 @@ export async function POST(req: Request) {
   const shippingPrice = Number(shipping.price);
   const total_price = subtotal + shippingPrice;
 
-  // ─────────────────────────────────────────────────
-  // 5. GERAR LINK INFINITEPAY PRIMEIRO (antes de salvar no banco)
-  // ─────────────────────────────────────────────────
-  const handle = process.env.INFINITEPAY_HANDLE;
-  if (!handle) {
-    console.error('[Checkout] INFINITEPAY_HANDLE não configurado');
-    return NextResponse.json({ error: 'Gateway de pagamento não configurado' }, { status: 500 });
-  }
-
   // NSU único com UUID (sem colisão)
   const order_nsu = `LUM-${randomUUID().split('-')[0].toUpperCase()}`;
 
-  const redirect_url = `${process.env.NEXT_PUBLIC_SITE_URL}/pedido/sucesso?order=${order_nsu}`;
-
-  const infinitePayPayload = {
-    handle,
-    redirect_url,
-    order_nsu,
-    items: infinitePayItems,
-    customer: {
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone,
-    },
-    address: {
-      street: shippingAddress.street,
-      number: shippingAddress.number,
-      complement: shippingAddress.complement ?? '',
-      neighborhood: shippingAddress.neighborhood ?? '',
-      city: shippingAddress.city ?? '',
-      state: shippingAddress.state ?? '',
-      zip: shippingAddress.cep,
-    },
-  };
-
-  let checkoutUrl: string;
-  try {
-    const checkoutResponse = await withTimeout(
-      fetch('https://api.checkout.infinitepay.io/links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(infinitePayPayload),
-      }),
-      10_000, // 10 segundos
-      'InfinitePay'
-    );
-
-    if (!checkoutResponse.ok) {
-      const err = await checkoutResponse.text();
-      console.error('[Checkout] InfinitePay error:', checkoutResponse.status, err);
-      return NextResponse.json({ error: 'Erro no gateway de pagamento' }, { status: 502 });
-    }
-
-    const { url } = await checkoutResponse.json();
-    if (!url) {
-      console.error('[Checkout] InfinitePay não retornou URL');
-      return NextResponse.json({ error: 'Gateway não retornou URL de pagamento' }, { status: 502 });
-    }
-
-    checkoutUrl = url;
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido';
-    console.error('[Checkout] Falha na chamada InfinitePay:', message);
-    return NextResponse.json(
-      { error: 'Gateway de pagamento indisponível. Tente novamente.' },
-      { status: 503 }
-    );
-  }
-
   // ─────────────────────────────────────────────────
-  // 6. SALVAR PEDIDO NO BANCO (após URL garantida)
+  // 6. SALVAR PEDIDO NO BANCO PRIMEIRO (Garantia de persistência - Sem pedidos órfãos)
   // ─────────────────────────────────────────────────
   const { error: orderError } = await supabase.from('orders').insert([
     {
@@ -252,16 +209,103 @@ export async function POST(req: Request) {
   ]);
 
   if (orderError) {
-    console.error('[Checkout] Erro ao criar pedido no banco:', orderError.message);
-    // URL do InfinitePay já foi gerada — retornar mesmo assim para o cliente poder pagar
-    // O pedido pode ser reconciliado depois via webhook
-    console.warn('[Checkout] Retornando URL mesmo com erro no banco — reconciliar via webhook');
+    console.error('[Checkout] Erro ao criar pedido no banco antes do pagamento:', orderError.message);
+    return NextResponse.json(
+      { error: 'Não foi possível registrar o pedido no banco de dados. Tente novamente.' },
+      { status: 500 }
+    );
   }
 
-  console.info('[Checkout] Pedido criado com sucesso', {
+  console.info('[Checkout] Pedido pendente registrado no banco de dados com sucesso', { order_nsu });
+
+  // ─────────────────────────────────────────────────
+  // 7. GERAR LINK INFINITEPAY (Após pedido garantido no banco)
+  // ─────────────────────────────────────────────────
+  const redirect_url = `${siteUrl}/pagamento/sucesso?order=${order_nsu}`;
+  const webhook_url = `${siteUrl}/api/webhooks/infinitepay`;
+
+  // Payload homologado e minimalista
+  const infinitePayPayload = {
+    handle,
+    items: infinitePayItems,
+    redirect_url,
+    webhook_url,
+  };
+
+  let checkoutUrl: string;
+  try {
+    const checkoutResponse = await withTimeout(
+      fetch('https://api.checkout.infinitepay.io/links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(infinitePayPayload),
+      }),
+      10_000, // 10 segundos
+      'InfinitePay'
+    );
+
+    if (!checkoutResponse.ok) {
+      const err = await checkoutResponse.text();
+      console.error('[Checkout] Erro de resposta da InfinitePay:', checkoutResponse.status, err);
+      
+      // Rollback do pedido no banco de dados
+      await supabase
+        .from('orders')
+        .update({ payment_status: 'failed', status: 'cancelled' })
+        .eq('order_nsu', order_nsu);
+        
+      return NextResponse.json({ error: 'Erro ao gerar link de pagamento no gateway' }, { status: 502 });
+    }
+
+    const responseJson = await checkoutResponse.json();
+    const { checkout_url } = responseJson;
+    
+    if (!checkout_url) {
+      console.error('[Checkout] InfinitePay não retornou checkout_url válida:', responseJson);
+      
+      // Rollback do pedido no banco de dados
+      await supabase
+        .from('orders')
+        .update({ payment_status: 'failed', status: 'cancelled' })
+        .eq('order_nsu', order_nsu);
+
+      return NextResponse.json({ error: 'Gateway não retornou URL de pagamento válida' }, { status: 502 });
+    }
+
+    checkoutUrl = checkout_url;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido';
+    console.error('[Checkout] Falha de comunicação com InfinitePay:', message);
+
+    // Rollback do pedido no banco de dados
+    await supabase
+      .from('orders')
+      .update({ payment_status: 'failed', status: 'cancelled' })
+      .eq('order_nsu', order_nsu);
+
+    return NextResponse.json(
+      { error: 'Gateway de pagamento temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    );
+  }
+
+  // ─────────────────────────────────────────────────
+  // 8. ATUALIZAR PEDIDO COM METADADOS DE CHECKOUT
+  // ─────────────────────────────────────────────────
+  const { error: updateOrderError } = await supabase
+    .from('orders')
+    .update({
+      metadata: { checkout_url: checkoutUrl }
+    } as any)
+    .eq('order_nsu', order_nsu);
+
+  if (updateOrderError) {
+    console.warn('[Checkout] Erro não bloqueante ao salvar metadata da checkout_url no pedido:', updateOrderError.message);
+  }
+
+  console.info('[Checkout] Link de checkout e transação concluídos com sucesso', {
     order_nsu,
     total_price,
-    items: validItems.length,
   });
 
   return NextResponse.json({ success: true, checkout_url: checkoutUrl });

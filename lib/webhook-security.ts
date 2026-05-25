@@ -12,24 +12,41 @@ import { createHmac, timingSafeEqual } from 'crypto';
 export function verifyWebhookSignature(
   payload: string,
   signatureHeader: string | null,
-  secret: string
+  secret: string,
+  timestampHeader?: string | null
 ): boolean {
   if (!signatureHeader) return false;
 
   try {
     // Remove prefixo "sha256=" se presente
     const receivedSig = signatureHeader.replace(/^sha256=/, '');
+    const receivedBuf = Buffer.from(receivedSig, 'hex');
 
-    const expectedSig = createHmac('sha256', secret)
+    // 1. Tentar validar com o padrão puro (apenas payload)
+    const expectedSigPure = createHmac('sha256', secret)
       .update(payload, 'utf8')
       .digest('hex');
+    const expectedBufPure = Buffer.from(expectedSigPure, 'hex');
 
-    const receivedBuf = Buffer.from(receivedSig, 'hex');
-    const expectedBuf = Buffer.from(expectedSig, 'hex');
+    let isValid = false;
+    if (receivedBuf.length === expectedBufPure.length) {
+      isValid = timingSafeEqual(receivedBuf, expectedBufPure);
+    }
 
-    if (receivedBuf.length !== expectedBuf.length) return false;
+    // 2. Se falhar, e houver timestampHeader, tentar validar com padrão concatenado (timestamp.payload)
+    if (!isValid && timestampHeader) {
+      const concatenatedData = `${timestampHeader}.${payload}`;
+      const expectedSigWithTimestamp = createHmac('sha256', secret)
+        .update(concatenatedData, 'utf8')
+        .digest('hex');
+      const expectedBufWithTimestamp = Buffer.from(expectedSigWithTimestamp, 'hex');
 
-    return timingSafeEqual(receivedBuf, expectedBuf);
+      if (receivedBuf.length === expectedBufWithTimestamp.length) {
+        isValid = timingSafeEqual(receivedBuf, expectedBufWithTimestamp);
+      }
+    }
+
+    return isValid;
   } catch {
     return false;
   }
