@@ -17,9 +17,9 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/admin/dashboard');
+      window.location.href = '/admin/dashboard';
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +28,7 @@ export default function AdminLogin() {
     
     try {
       await authService.signIn(email, password);
-      // O redirect acontecerá no useEffect assim que o estado 'user' for atualizado pelo Context
+      window.location.href = '/admin/dashboard';
     } catch (err: any) {
       setErrorMsg(err.message || 'Erro ao realizar login. Verifique suas credenciais.');
       setLoading(false);
