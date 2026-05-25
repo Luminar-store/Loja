@@ -26,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${notoSerif.variable} ${manrope.variable} dark`} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${notoSerif.variable} ${manrope.variable} dark w-full`} suppressHydrationWarning>
       <head />
-      <body className="bg-[#131313] text-[#e5e2e1] font-sans antialiased min-h-[100dvh] flex flex-col selection:bg-[#D4AF37] selection:text-black pb-16 md:pb-0">
+      <body className="bg-[#131313] text-[#e5e2e1] font-sans antialiased min-h-[100dvh] w-full flex flex-col selection:bg-[#D4AF37] selection:text-black pb-16 md:pb-0">
         <LayoutWrapper>
           {children}
         </LayoutWrapper>

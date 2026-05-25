@@ -38,12 +38,13 @@ export default function AdminLogin() {
   if (authLoading) return null;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#0B0B0B] p-4 font-sans text-white">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#0B0B0B] p-4 font-sans text-white" style={{ width: '100%' }}>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-[#131313] border border-white/5 p-8 rounded-2xl shadow-2xl"
+        className="w-full bg-[#131313] border border-white/5 p-8 rounded-2xl shadow-2xl"
+        style={{ width: '100%', maxWidth: '440px' }}
       >
         <div className="text-center mb-10">
           <h1 className="font-serif text-3xl text-[#d4af37] tracking-widest uppercase mb-2">Luminar</h1>
