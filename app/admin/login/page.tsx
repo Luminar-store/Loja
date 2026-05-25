@@ -38,7 +38,7 @@ export default function AdminLogin() {
   if (authLoading) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B] p-4 font-sans text-white">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#0B0B0B] p-4 font-sans text-white">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
