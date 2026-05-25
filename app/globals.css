@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-midnight: #0B0B0B;
+  --color-onyx: #1A1A1A;
+  --color-gold: #D4AF37;
+  --color-muted-gold: #8C7326;
+  --color-white: #FFFFFF;
+  --color-ghost: rgba(255, 255, 255, 0.1);
+
+  --font-serif: var(--font-noto-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 2rem;
+  --spacing-lg: 4rem;
+  --spacing-xl: 8rem;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-midnight);
+    color: var(--color-white);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gold text-black font-semibold text-sm tracking-widest uppercase px-8 py-4 flex items-center justify-center transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#b0912d] cursor-pointer;
+  }
+  
+  .btn-secondary {
+    @apply border border-gold text-white font-semibold text-sm tracking-widest uppercase px-8 py-4 flex items-center justify-center transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)] bg-transparent hover:bg-gold hover:text-black cursor-pointer;
+  }
+  
+  .ghost-border {
+    @apply border border-ghost transition-colors duration-400 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-gold;
+  }
+
+  .glass-panel {
+    @apply bg-midnight/80 backdrop-blur-xl border-b border-ghost;
+  }
+}

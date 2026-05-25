@@ -1,0 +1,10 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS order_nsu text UNIQUE;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer_name text;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer_email text;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer_phone text;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS items jsonb;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS subtotal numeric;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipping_price numeric;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS total_price numeric;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_status text DEFAULT 'pending';
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipping_address jsonb;

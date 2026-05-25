@@ -1,0 +1,20 @@
+node_modules/
+.next/
+coverage/
+.DS_Store
+*.log
+
+# =====================================================
+# VARIÁVEIS DE AMBIENTE — NUNCA commitar estes arquivos
+# =====================================================
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+
+# Apenas o template com placeholders é permitido
+!.env.example
