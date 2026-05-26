@@ -107,8 +107,10 @@ export default function ProductsPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg border border-white/10 overflow-hidden flex-shrink-0 bg-[#1A1A1A] relative">
-                        {product.images && product.images[0] ? (
-                          <Image src={product.images[0]} alt={product.name} fill className="object-cover"  referrerPolicy="no-referrer" />
+                        {product.image_url ? (
+                          <Image src={product.image_url} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
+                        ) : product.images && product.images[0] ? (
+                          <Image src={product.images[0]} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-white/20 text-xs">Sem foto</div>
                         )}

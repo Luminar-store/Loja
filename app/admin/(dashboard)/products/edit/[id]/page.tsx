@@ -35,6 +35,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     width: null,
     height: null,
     images: [],
+    image_url: null,
     is_featured: false,
     is_made_to_order: false,
   });
@@ -58,6 +59,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             width: prod.width,
             height: prod.height,
             images: prod.images || [],
+            image_url: prod.image_url || null,
             is_featured: prod.is_featured || false,
             is_made_to_order: prod.is_made_to_order || false,
           });
@@ -77,6 +79,52 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     };
     loadProduct();
   }, [id]);
+
+  const handlePrimaryImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setUploadingImages(true);
+      
+      try {
+        // Se já tiver uma imagem antiga cadastrada, remove do Supabase Storage
+        if (formData.image_url) {
+          await storageService.deleteImage(formData.image_url);
+        }
+        
+        const slugName = formData.slug || formData.name || 'product';
+        const url = await storageService.uploadImage(file, 'products', slugName);
+        
+        setFormData(prev => ({
+          ...prev,
+          image_url: url
+        }));
+        toast.success('Imagem principal enviada com compressão WebP!');
+      } catch (error: any) {
+        toast.error(`Erro no upload: ${error.message}`);
+      } finally {
+        setUploadingImages(false);
+      }
+      
+      e.target.value = ''; // limpa o input
+    }
+  };
+
+  const removePrimaryImage = async () => {
+    if (!formData.image_url) return;
+    const oldUrl = formData.image_url;
+    
+    setFormData(prev => ({
+      ...prev,
+      image_url: null
+    }));
+    
+    try {
+      await storageService.deleteImage(oldUrl);
+      toast.success('Imagem principal removida do Storage!');
+    } catch (error) {
+      console.error('Erro ao deletar imagem antiga:', error);
+    }
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -103,11 +151,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const removeExistingImage = (imageUrl: string) => {
+  const removeExistingImage = async (imageUrl: string) => {
     setFormData(prev => ({
       ...prev,
       images: (prev.images || []).filter(img => img !== imageUrl),
     }));
+    try {
+      await storageService.deleteImage(imageUrl);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -192,56 +245,86 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             transition={{ delay: 0.1 }}
             className="bg-[#131313] border border-white/5 p-6 rounded-2xl space-y-6"
           >
-            <h2 className="text-lg font-serif">Mídia</h2>
+            <div>
+              <h2 className="text-lg font-serif">Imagem de Destaque</h2>
+              <p className="text-xs text-white/40 mt-1">Esta será a imagem principal da joia, exibida no catálogo e buscas.</p>
+            </div>
             
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              {(formData.images || []).map((img, i) => (
-                <div key={i} className="aspect-square bg-[#1A1A1A] rounded-xl border border-[#d4af37] overflow-hidden relative group">
-                  <Image src={img} alt="Prod" fill className="object-cover"  referrerPolicy="no-referrer" />
-                  {i === 0 && (
-                    <div className="absolute top-2 left-2 bg-[#d4af37] text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm z-10">
-                      Principal
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer gap-2">
-                    {i !== 0 && (
-                      <button 
-                        onClick={() => {
-                          const newImages = [...(formData.images || [])];
-                          newImages.splice(i, 1);
-                          newImages.unshift(img);
-                          setFormData({ ...formData, images: newImages });
-                        }}
-                        className="text-white text-xs uppercase tracking-widest font-bold bg-[#d4af37]/20 hover:bg-[#d4af37] hover:text-black py-1 px-3 border border-[#d4af37] rounded-full transition-all"
-                      >
-                        Tornar Principal
-                      </button>
-                    )}
+            {/* Primary Image Preview / Upload */}
+            <div className="space-y-4">
+              {formData.image_url ? (
+                <div className="relative aspect-video max-w-md mx-auto bg-[#1A1A1A] rounded-xl border border-[#d4af37]/30 overflow-hidden group shadow-lg shadow-black/40">
+                  <Image 
+                    src={formData.image_url} 
+                    alt="Imagem Principal" 
+                    fill 
+                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <label className="text-white text-xs uppercase tracking-widest font-bold bg-[#d4af37]/20 hover:bg-[#d4af37] hover:text-black py-2 px-4 border border-[#d4af37] rounded-lg transition-all cursor-pointer">
+                      Substituir
+                      <input type="file" accept="image/*" onChange={handlePrimaryImageChange} className="hidden" />
+                    </label>
                     <button 
-                      onClick={() => removeExistingImage(img)} 
-                      className="text-white text-xs uppercase tracking-widest font-bold bg-white/10 hover:bg-white hover:text-black py-1 px-3 border border-white/30 rounded-full transition-all flex items-center gap-1"
+                      onClick={removePrimaryImage}
+                      className="text-white text-xs uppercase tracking-widest font-bold bg-red-500/20 hover:bg-red-500 py-2 px-4 border border-red-500 rounded-lg transition-all"
                     >
-                      <X className="w-3 h-3" /> Remover
+                      Remover
                     </button>
                   </div>
                 </div>
-              ))}
+              ) : (
+                <div className={`relative border-2 border-dashed ${uploadingImages ? 'border-[#d4af37]/50 bg-[#d4af37]/5' : 'border-white/10 hover:border-[#d4af37]/50 hover:bg-[#d4af37]/5'} rounded-xl p-8 text-center transition-all cursor-pointer`}>
+                  <input type="file" accept="image/*" onChange={handlePrimaryImageChange} disabled={uploadingImages} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
+                  {uploadingImages ? (
+                    <div className="py-4 space-y-3">
+                      <Loader2 className="w-8 h-8 text-[#d4af37] mx-auto animate-spin" />
+                      <p className="text-sm text-[#d4af37] font-medium">Comprimindo e enviando para o Supabase...</p>
+                      <div className="w-48 h-1.5 bg-white/5 mx-auto rounded-full overflow-hidden relative">
+                        <div className="absolute top-0 bottom-0 left-0 bg-[#d4af37] w-2/3 rounded-full animate-pulse"></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-8 h-8 text-white/40 mx-auto mb-4 animate-bounce" />
+                      <p className="text-sm text-white/70 mb-1">Carregar Imagem de Destaque</p>
+                      <p className="text-xs text-white/40">PNG, JPG ou WebP (Será convertido para WebP até 5MB)</p>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className={`relative border-2 border-dashed ${uploadingImages ? 'border-[#d4af37]/50 bg-[#d4af37]/5' : 'border-white/10 hover:border-[#d4af37]/50 hover:bg-[#d4af37]/5'} rounded-xl p-8 text-center transition-all cursor-pointer`}>
-              <input type="file" multiple accept="image/*" onChange={handleImageChange} disabled={uploadingImages} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
-              {uploadingImages ? (
-                <>
-                  <Loader2 className="w-8 h-8 text-[#d4af37] mx-auto mb-4 animate-spin" />
-                  <p className="text-sm text-[#d4af37] mb-1">Fazendo upload das imagens...</p>
-                </>
-              ) : (
-                <>
-                  <UploadCloud className="w-8 h-8 text-white/40 mx-auto mb-4" />
-                  <p className="text-sm text-white/70 mb-1">Clique para adicionar mais imagens ou arraste-as</p>
-                  <p className="text-xs text-white/40">SVG, PNG, JPG (Max. 5MB)</p>
-                </>
+            {/* Gallery (Imagens Secundárias) */}
+            <div className="pt-6 border-t border-white/5 space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-white/80">Galeria Secundária (Opcional)</h3>
+                <p className="text-xs text-white/40 mt-1">Imagens complementares exibidas na página de detalhes da joia.</p>
+              </div>
+
+              {(formData.images && formData.images.length > 0) && (
+                <div className="grid grid-cols-4 gap-4">
+                  {formData.images.map((img, i) => (
+                    <div key={i} className="aspect-square bg-[#1A1A1A] rounded-xl border border-white/10 overflow-hidden relative group">
+                      <Image src={img} alt="Preview" fill className="object-cover" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                        <button 
+                          onClick={() => removeExistingImage(img)} 
+                          className="text-white text-[10px] uppercase tracking-widest font-bold bg-white/10 hover:bg-white hover:text-black py-1 px-2 border border-white/30 rounded transition-all"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
+
+              <div className="relative border border-dashed border-white/5 hover:border-white/20 rounded-xl p-4 text-center transition-all cursor-pointer">
+                <input type="file" multiple accept="image/*" onChange={handleImageChange} disabled={uploadingImages} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
+                <p className="text-xs text-white/50">Clique para adicionar fotos adicionais à galeria</p>
+              </div>
             </div>
           </motion.div>
 

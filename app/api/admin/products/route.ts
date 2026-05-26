@@ -51,6 +51,7 @@ export async function POST(req: Request) {
           width: body.width ?? null,
           height: body.height ?? null,
           images: body.images || null,
+          image_url: body.image_url || null,
           is_featured: !!body.is_featured,
           is_made_to_order: !!body.is_made_to_order,
         },

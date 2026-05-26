@@ -1,5 +1,4 @@
 import { Bell, Search } from 'lucide-react';
-import Image from 'next/image';
 
 export function AdminHeader() {
   return (
@@ -23,17 +22,11 @@ export function AdminHeader() {
         
         <div className="flex items-center gap-3 border-l border-white/10 pl-6 cursor-pointer group">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-white group-hover:text-[#d4af37] transition-colors">Helena Martins</p>
+            <p className="text-sm font-medium text-white group-hover:text-[#d4af37] transition-colors">João Pedro</p>
             <p className="text-xs text-white/50 uppercase tracking-wider font-bold">Administrador</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#1A1A1A] border border-[#d4af37]/30 p-0.5 overflow-hidden relative">
-            <Image 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuATGpP3MkFYBgsyzxY43vVkjmkJeDRr07FA9pQw8LRU1v1P_21wOw5oXXDlZ9TMqOJJl9HoAQmv0EWq4WNFRWEIQb900Mz0NZArwjfaCUbYTtCUKJyaaSTY4Lu6KDkAcpMIqmU6IeK28F9aCGWUyCxTEhtD-1RtlLN9Js2tsgNwNvQtF45VYvYMhvfuRBIpywOn3QfN41j7N74wo3fjJ4jJ3tC4JqK-gbXGgPHo3D3v4ZTHKHRxmiYiLjtRzG4Gxb7Bdr8HVjm--i4" 
-              alt="Admin" 
-              fill
-              className="object-cover rounded-full"
-              referrerPolicy="no-referrer"
-            />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1A1A1A] to-[#0B0B0B] border border-[#d4af37]/30 group-hover:border-[#d4af37] transition-all flex items-center justify-center relative overflow-hidden shadow-lg shadow-[#d4af37]/5">
+            <span className="text-xs font-bold text-[#d4af37] tracking-widest uppercase">JP</span>
           </div>
         </div>
       </div>

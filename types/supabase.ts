@@ -25,6 +25,7 @@ export interface Database {
           width: number | null
           height: number | null
           images: string[] | null
+          image_url: string | null
           slug: string | null
           is_featured: boolean
           is_made_to_order: boolean
@@ -44,6 +45,7 @@ export interface Database {
           width?: number | null
           height?: number | null
           images?: string[] | null
+          image_url?: string | null
           slug?: string | null
           is_featured?: boolean
           is_made_to_order?: boolean
@@ -63,6 +65,7 @@ export interface Database {
           width?: number | null
           height?: number | null
           images?: string[] | null
+          image_url?: string | null
           slug?: string | null
           is_featured?: boolean
           is_made_to_order?: boolean

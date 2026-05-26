@@ -49,6 +49,7 @@ export async function PUT(
         width: body.width,
         height: body.height,
         images: body.images,
+        image_url: body.image_url,
         is_featured: body.is_featured,
         is_made_to_order: body.is_made_to_order,
       })
@@ -113,6 +114,7 @@ export async function PATCH(
     'width',
     'height',
     'images',
+    'image_url',
     'is_featured',
     'is_made_to_order',
   ];

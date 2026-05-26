@@ -4,6 +4,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  image_url?: string | null;
   created_at?: string;
 }
 
@@ -29,7 +30,7 @@ export const categoryService = {
     }
   },
 
-  async createCategory(category: { name: string; slug: string }): Promise<Category | null> {
+  async createCategory(category: { name: string; slug: string; image_url?: string | null }): Promise<Category | null> {
     const { data, error } = await (supabase as any)
       .from('categories')
       .insert([category])
@@ -40,7 +41,7 @@ export const categoryService = {
     return data;
   },
 
-  async updateCategory(id: string, updates: { name?: string; slug?: string }): Promise<Category | null> {
+  async updateCategory(id: string, updates: { name?: string; slug?: string; image_url?: string | null }): Promise<Category | null> {
     const { data, error } = await (supabase as any)
       .from('categories')
       .update(updates)
