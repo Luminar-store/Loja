@@ -61,7 +61,7 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
   const currentBanner = banners[currentIndex];
 
   return (
-    <section className="relative h-[100dvh] min-h-[700px] w-full overflow-hidden bg-black">
+    <section className="relative h-[100dvh] min-h-[700px] w-full overflow-hidden bg-[#131313]">
       {/* Slides com AnimatePresence */}
       <div className="absolute inset-0 z-0 w-full h-full">
         <AnimatePresence mode="wait">
@@ -79,55 +79,72 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
               <img 
                 src={currentBanner.desktop_image_url} 
                 alt={currentBanner.title} 
-                className="w-full h-full object-cover object-center pointer-events-none"
+                className={`w-full h-full object-center pointer-events-none transition-all duration-350 ${
+                  currentBanner.hide_overlay 
+                    ? 'object-contain md:object-cover bg-[#131313]' 
+                    : 'object-cover'
+                }`}
                 referrerPolicy="no-referrer"
               />
             </picture>
             
             {/* Overlay Gradiente de Luxo */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#131313] opacity-90"></div>
+            {!currentBanner.hide_overlay && (
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#131313] opacity-90"></div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Conteúdo Dinâmico Centralizado */}
-      <div className="relative z-10 w-full h-full max-w-7xl mx-auto px-6 sm:px-16 flex flex-col justify-center items-center text-center mt-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentBanner.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="max-w-4xl space-y-6"
-          >
-            {currentBanner.subtitle && (
-              <span className="font-sans text-[#f2ca50] text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.4em] block">
-                {currentBanner.subtitle}
-              </span>
-            )}
-            
-            <h1 className="font-serif text-4xl sm:text-6xl md:text-[64px] text-[#e5e2e1] leading-tight tracking-wide">
-              {currentBanner.title}
-            </h1>
+      {!currentBanner.hide_overlay ? (
+        <div className="relative z-10 w-full h-full max-w-7xl mx-auto px-6 sm:px-16 flex flex-col justify-center items-center text-center mt-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentBanner.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="max-w-4xl space-y-6"
+            >
+              {currentBanner.subtitle && (
+                <span className="font-sans text-[#f2ca50] text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.4em] block">
+                  {currentBanner.subtitle}
+                </span>
+              )}
+              
+              <h1 className="font-serif text-4xl sm:text-6xl md:text-[64px] text-[#e5e2e1] leading-tight tracking-wide">
+                {currentBanner.title}
+              </h1>
 
-            <div className="w-12 h-[1px] bg-[#f2ca50]/50 mx-auto my-4"></div>
+              <div className="w-12 h-[1px] bg-[#f2ca50]/50 mx-auto my-4"></div>
 
-            {/* Ações / Botão CTA */}
-            {currentBanner.link_url && (
-              <div className="pt-6">
-                <Link 
-                  href={currentBanner.link_url} 
-                  className="inline-flex items-center gap-2 bg-[#d4af37] text-[#241a00] px-12 py-4 font-sans text-[11px] font-bold uppercase tracking-widest transition-all duration-400 hover:brightness-110 active:scale-95 shadow-lg shadow-[#d4af37]/10"
-                >
-                  {currentBanner.button_text || 'Explorar Coleção'}
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+              {/* Ações / Botão CTA */}
+              {currentBanner.link_url && (
+                <div className="pt-6">
+                  <Link 
+                    href={currentBanner.link_url} 
+                    className="inline-flex items-center gap-2 bg-[#d4af37] text-[#241a00] px-12 py-4 font-sans text-[11px] font-bold uppercase tracking-widest transition-all duration-400 hover:brightness-110 active:scale-95 shadow-lg shadow-[#d4af37]/10"
+                  >
+                    {currentBanner.button_text || 'Explorar Coleção'}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : (
+        /* Se hide_overlay for verdadeiro, o banner inteiro vira um grande link absoluto sobreposto */
+        currentBanner.link_url && (
+          <Link 
+            href={currentBanner.link_url}
+            className="absolute inset-0 z-10 w-full h-full cursor-pointer"
+            aria-label={`Visualizar detalhes do banner: ${currentBanner.title}`}
+          />
+        )
+      )}
 
       {/* Setas Laterais de Navegação (Apenas se houver múltiplos banners) */}
       {banners.length > 1 && (

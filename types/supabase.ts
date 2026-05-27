@@ -378,6 +378,7 @@ export interface Database {
           button_text: string
           position: number
           is_active: boolean
+          hide_overlay: boolean
           created_at: string
         }
         Insert: {
@@ -390,6 +391,7 @@ export interface Database {
           button_text?: string
           position?: number
           is_active?: boolean
+          hide_overlay?: boolean
           created_at?: string
         }
         Update: {
@@ -402,6 +404,7 @@ export interface Database {
           button_text?: string
           position?: number
           is_active?: boolean
+          hide_overlay?: boolean
           created_at?: string
         }
         Relationships: []

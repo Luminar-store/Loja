@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.banners (
     button_text TEXT DEFAULT 'Ver Detalhes',
     position INT DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
+    hide_overlay BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -24,6 +25,7 @@ ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS link_url TEXT;
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS button_text TEXT DEFAULT 'Ver Detalhes';
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS position INT DEFAULT 0;
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS hide_overlay BOOLEAN DEFAULT false;
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
 
 -- 3. Criação de índices de performance de forma idempotente
@@ -51,7 +53,8 @@ INSERT INTO public.banners (
     link_url,
     button_text,
     position,
-    is_active
+    is_active,
+    hide_overlay
 )
 SELECT 
     'Elegância em cada detalhe. Produzido sob encomenda.',
@@ -61,6 +64,7 @@ SELECT
     '/categoria',
     'Explorar Coleção',
     0,
+    true,
     true
 WHERE NOT EXISTS (
     SELECT 1 FROM public.banners WHERE title = 'Elegância em cada detalhe. Produzido sob encomenda.'

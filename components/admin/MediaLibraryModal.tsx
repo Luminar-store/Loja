@@ -10,6 +10,7 @@ interface MediaFile {
   name: string;
   path: string;
   url: string;
+  folder: string;
   created_at: string;
 }
 
@@ -28,25 +29,25 @@ export function MediaLibraryModal({
   allowMultiple = true,
   title = 'Biblioteca de Mídias do Storage'
 }: MediaLibraryModalProps) {
-  const [folder, setFolder] = useState<string>('products');
-  const [files, setFiles] = useState<MediaFile[]>([]);
+  const [allMedia, setAllMedia] = useState<MediaFile[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<string>('Todos');
   const [loading, setLoading] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
 
   const fetchMedia = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/admin/media?folder=${folder}`);
+      const res = await fetch('/api/admin/media');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao listar mídias');
-      setFiles(data.files || []);
+      setAllMedia(data.files || []);
     } catch (err: any) {
       console.error(err);
       toast.error(`Falha ao listar mídias: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, [folder]);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -82,6 +83,14 @@ export function MediaLibraryModal({
 
   if (!isOpen) return null;
 
+  // Extrai dinamicamente as pastas reais com fotos
+  const foldersList = ['Todos', ...Array.from(new Set(allMedia.map(item => item.folder))).sort()];
+
+  // Filtra localmente de acordo com a pasta ativa
+  const filteredFiles = selectedFolder === 'Todos'
+    ? allMedia
+    : allMedia.filter(item => item.folder === selectedFolder);
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -109,26 +118,21 @@ export function MediaLibraryModal({
           </div>
 
           {/* Navegação de Pastas / Filtros */}
-          <div className="flex items-center gap-3 px-6 py-4 bg-[#1A1A1A] border-b border-white/5">
-            <span className="text-[10px] font-sans font-bold text-white/40 uppercase tracking-widest mr-2">
+          <div className="flex items-center gap-3 px-6 py-4 bg-[#1A1A1A] border-b border-white/5 overflow-x-auto no-scrollbar">
+            <span className="text-[10px] font-sans font-bold text-white/40 uppercase tracking-widest mr-2 whitespace-nowrap">
               Pastas:
             </span>
-            {[
-              { key: 'products', name: 'Produtos' },
-              { key: 'banners', name: 'Banners' },
-              { key: 'categories', name: 'Categorias' },
-              { key: 'avatars', name: 'Avatares' }
-            ].map(tab => (
+            {foldersList.map(tab => (
               <button
-                key={tab.key}
-                onClick={() => setFolder(tab.key)}
-                className={`px-4 py-2 border font-sans text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
-                  folder === tab.key
+                key={tab}
+                onClick={() => setSelectedFolder(tab)}
+                className={`px-4 py-2 border font-sans text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+                  selectedFolder === tab
                     ? 'border-[#d4af37] bg-[#d4af37]/5 text-[#d4af37]'
                     : 'border-white/10 text-white/55 hover:text-white hover:border-white/20'
                 }`}
               >
-                {tab.name}
+                {tab === 'raiz' ? 'Raiz' : tab}
               </button>
             ))}
           </div>
@@ -142,7 +146,7 @@ export function MediaLibraryModal({
                   Consultando bucket do Supabase...
                 </span>
               </div>
-            ) : files.length === 0 ? (
+            ) : filteredFiles.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-20 border border-dashed border-white/5 text-center p-8 bg-[#1A1A1A]/20">
                 <ImageIcon className="w-10 h-10 text-white/10 mb-4" />
                 <p className="font-sans text-xs text-white/50 uppercase tracking-widest">
@@ -154,7 +158,7 @@ export function MediaLibraryModal({
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
-                {files.map((file) => {
+                {filteredFiles.map((file) => {
                   const isSelected = selectedUrls.includes(file.url);
                   return (
                     <div

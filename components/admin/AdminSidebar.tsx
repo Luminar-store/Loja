@@ -11,7 +11,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +22,9 @@ const MENU_ITEMS = [
   { name: 'Produtos', href: '/admin/products', icon: Package },
   { name: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Categorias', href: '/admin/categories', icon: Package },
+  { name: 'Banners', href: '/admin/banners', icon: ImageIcon },
   { name: 'Personalizados', href: '/admin/custom-orders', icon: Users },
+  { name: 'Clientes', href: '/admin/customers', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart2 },
   { name: 'Configurações', href: '/admin/settings', icon: Settings },
 ];

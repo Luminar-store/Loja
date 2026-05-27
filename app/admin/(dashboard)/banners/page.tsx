@@ -41,7 +41,8 @@ export default function BannersPage() {
     mobile_image_url: '',
     link_url: '',
     button_text: 'Ver Detalhes',
-    is_active: true
+    is_active: true,
+    hide_overlay: false
   });
 
   const loadBanners = async () => {
@@ -118,7 +119,8 @@ export default function BannersPage() {
       mobile_image_url: '',
       link_url: '',
       button_text: 'Ver Detalhes',
-      is_active: true
+      is_active: true,
+      hide_overlay: false
     });
     setEditingBannerId(null);
   };
@@ -165,7 +167,8 @@ export default function BannersPage() {
       mobile_image_url: banner.mobile_image_url || '',
       link_url: banner.link_url || '',
       button_text: banner.button_text || 'Ver Detalhes',
-      is_active: banner.is_active || false
+      is_active: banner.is_active || false,
+      hide_overlay: banner.hide_overlay || false
     });
   };
 
@@ -355,6 +358,16 @@ export default function BannersPage() {
                 </label>
               </div>
 
+              <div className="pt-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center">
+                    <input type="checkbox" name="hide_overlay" checked={formData.hide_overlay} onChange={handleInputChange} className="peer appearance-none w-4 h-4 border border-white/20 rounded bg-[#1A1A1A] checked:bg-[#d4af37] checked:border-[#d4af37] transition-all" />
+                    <svg className="absolute w-2.5 h-2.5 text-black opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                  </div>
+                  <span className="text-xs uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">Ocultar texto sobre o banner</span>
+                </label>
+              </div>
+
               <div className="flex gap-2 pt-4 border-t border-white/5">
                 {editingBannerId && (
                   <button type="button" onClick={resetForm} className="w-1/2 py-2 border border-white/10 hover:bg-white/5 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors">
@@ -401,6 +414,11 @@ export default function BannersPage() {
                         ) : (
                           <span className="px-1.5 py-0.5 bg-red-500/10 text-red-400 border border-red-500/20 text-[8px] font-bold uppercase tracking-widest rounded">
                             Oculto
+                          </span>
+                        )}
+                        {banner.hide_overlay && (
+                          <span className="px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 text-[8px] font-bold uppercase tracking-widest rounded">
+                            Arte Limpa
                           </span>
                         )}
                         <span className="text-[10px] text-white/30 font-mono">Ordem #{idx + 1}</span>
