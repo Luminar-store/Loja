@@ -72,69 +72,174 @@ export interface Database {
         }
         Relationships: []
       }
-      orders: {
+      carts: {
         Row: {
           id: string
-          created_at: string
-          customer_id: string | null
-          order_nsu: string | null
-          customer_name: string | null
-          customer_email: string | null
-          customer_phone: string | null
-          items: Json | null
-          subtotal: number | null
-          shipping_price: number | null
-          total_price: number | null
-          payment_status: string | null
-          shipping_address: Json | null
+          user_id: string | null
+          session_id: string
           status: string
-          capture_method: string | null
-          transaction_nsu: string | null
-          invoice_slug: string | null
-          receipt_url: string | null
-          paid_at: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          user_id?: string | null
+          session_id: string
+          status?: string
           created_at?: string
-          customer_id?: string | null
-          order_nsu?: string | null
-          customer_name?: string | null
-          customer_email?: string | null
-          customer_phone?: string | null
-          items?: Json | null
-          subtotal?: number | null
-          shipping_price?: number | null
-          total_price?: number | null
-          payment_status?: string | null
-          shipping_address?: Json | null
-          status: string
-          capture_method?: string | null
-          transaction_nsu?: string | null
-          invoice_slug?: string | null
-          receipt_url?: string | null
-          paid_at?: string | null
+          updated_at?: string
         }
         Update: {
           id?: string
-          created_at?: string
-          customer_id?: string | null
-          order_nsu?: string | null
-          customer_name?: string | null
-          customer_email?: string | null
-          customer_phone?: string | null
-          items?: Json | null
-          subtotal?: number | null
-          shipping_price?: number | null
-          total_price?: number | null
-          payment_status?: string | null
-          shipping_address?: Json | null
+          user_id?: string | null
+          session_id?: string
           status?: string
-          capture_method?: string | null
-          transaction_nsu?: string | null
-          invoice_slug?: string | null
-          receipt_url?: string | null
-          paid_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cart_items: {
+        Row: {
+          id: string
+          cart_id: string
+          product_id: string
+          quantity: number
+          unit_price: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          cart_id: string
+          product_id: string
+          quantity?: number
+          unit_price: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          cart_id?: string
+          product_id?: string
+          quantity?: number
+          unit_price?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          id: string
+          customer_id: string | null
+          status: string
+          payment_status: string
+          shipping_status: string
+          subtotal: number
+          shipping_price: number
+          total_price: number
+          gateway: string
+          gateway_reference: string | null
+          customer_name: string
+          customer_email: string
+          customer_phone: string
+          shipping_address: Json
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id?: string | null
+          status?: string
+          payment_status?: string
+          shipping_status?: string
+          subtotal: number
+          shipping_price: number
+          total_price: number
+          gateway?: string
+          gateway_reference?: string | null
+          customer_name: string
+          customer_email: string
+          customer_phone: string
+          shipping_address: Json
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string | null
+          status?: string
+          payment_status?: string
+          shipping_status?: string
+          subtotal?: number
+          shipping_price?: number
+          total_price?: number
+          gateway?: string
+          gateway_reference?: string | null
+          customer_name?: string
+          customer_email?: string
+          customer_phone?: string
+          shipping_address?: Json
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          product_id: string | null
+          quantity: number
+          unit_price: number
+          product_snapshot: Json
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          product_id?: string | null
+          quantity: number
+          unit_price: number
+          product_snapshot: Json
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+          product_snapshot?: Json
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          id: string
+          order_id: string
+          gateway: string
+          transaction_id: string
+          status: string
+          payload: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          gateway?: string
+          transaction_id: string
+          status: string
+          payload?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          gateway?: string
+          transaction_id?: string
+          status?: string
+          payload?: Json | null
+          created_at?: string
         }
         Relationships: []
       }
@@ -189,6 +294,274 @@ export interface Database {
           is_active?: boolean
           role?: string
           created_at?: string
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          image_url: string | null
+          seo_title: string | null
+          seo_description: string | null
+          is_featured: boolean
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          image_url?: string | null
+          seo_title?: string | null
+          seo_description?: string | null
+          is_featured?: boolean
+          position?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          image_url?: string | null
+          seo_title?: string | null
+          seo_description?: string | null
+          is_featured?: boolean
+          position?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      product_images: {
+        Row: {
+          id: string
+          product_id: string
+          url: string
+          position: number
+          is_primary: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          url: string
+          position?: number
+          is_primary?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          url?: string
+          position?: number
+          is_primary?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      banners: {
+        Row: {
+          id: string
+          title: string
+          subtitle: string | null
+          desktop_image_url: string
+          mobile_image_url: string
+          link_url: string | null
+          button_text: string
+          position: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          subtitle?: string | null
+          desktop_image_url: string
+          mobile_image_url: string
+          link_url?: string | null
+          button_text?: string
+          position?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          subtitle?: string | null
+          desktop_image_url?: string
+          mobile_image_url?: string
+          link_url?: string | null
+          button_text?: string
+          position?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          key: string
+          value: string
+          type: string
+          group: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: string
+          type?: string
+          group?: string
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: string
+          type?: string
+          group?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      storefront_sections: {
+        Row: {
+          id: string
+          section_key: string
+          position: number
+          is_active: boolean
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          section_key: string
+          position?: number
+          is_active?: boolean
+          payload?: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          section_key?: string
+          position?: number
+          is_active?: boolean
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cart_recovery: {
+        Row: {
+          id: string
+          session_id: string
+          customer_email: string | null
+          customer_phone: string | null
+          customer_name: string | null
+          cart_items: Json
+          status: string
+          checkout_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          customer_name?: string | null
+          cart_items: Json
+          status?: string
+          checkout_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          customer_name?: string | null
+          cart_items?: Json
+          status?: string
+          checkout_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_reviews: {
+        Row: {
+          id: string
+          product_id: string
+          reviewer_name: string
+          reviewer_email: string
+          rating: number
+          comment: string | null
+          is_verified_buyer: boolean
+          is_approved: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          reviewer_name: string
+          reviewer_email: string
+          rating: number
+          comment?: string | null
+          is_verified_buyer?: boolean
+          is_approved?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          reviewer_name?: string
+          reviewer_email?: string
+          rating?: number
+          comment?: string | null
+          is_verified_buyer?: boolean
+          is_approved?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      order_timeline: {
+        Row: {
+          id: string
+          order_id: string
+          step_key: string
+          title: string
+          description: string | null
+          is_completed: boolean
+          completed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          step_key: string
+          title: string
+          description?: string | null
+          is_completed?: boolean
+          completed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          step_key?: string
+          title?: string
+          description?: string | null
+          is_completed?: boolean
+          completed_at?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

@@ -25,11 +25,11 @@ export const storageService = {
     if (typeof window !== 'undefined') {
       try {
         const options = {
-          maxSizeMB: 1.5,            // tamanho máximo de saída
-          maxWidthOrHeight: 1200,   // limita resolução excessiva
+          maxSizeMB: 2.0,            // tamanho máximo de saída
+          maxWidthOrHeight: 1600,   // limita resolução conforme especificação (1600px)
           useWebWorker: true,
           fileType: 'image/webp',   // converter para WebP
-          initialQuality: 0.8,      // qualidade equilibrada
+          initialQuality: 0.8,      // qualidade equilibrada de e-commerce premium
         };
         processedFile = await imageCompression(file, options);
       } catch (err) {
@@ -37,14 +37,19 @@ export const storageService = {
       }
     }
 
-    // 3. Geração automática de nome único: timestamp + slug + extensão
+    // 3. Geração automática de nome único: UUID curto + timestamp + slug + extensão (.webp)
     const cleanSlug = slug
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '') // remove acentos
       .replace(/[^a-z0-9-_]/g, '_')
       .substring(0, 50);
-    const filePath = `${folder}/${Date.now()}_${cleanSlug}.webp`;
+      
+    const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID 
+      ? crypto.randomUUID().slice(0, 8) 
+      : Math.random().toString(36).substring(2, 10);
+
+    const filePath = `${folder}/${Date.now()}_${uniqueId}_${cleanSlug}.webp`;
 
     // 4. Upload para o bucket 'products'
     const { data, error } = await supabase.storage

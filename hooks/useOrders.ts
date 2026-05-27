@@ -5,23 +5,22 @@ import { supabase } from '@/lib/supabase';
 
 export interface Order {
   id: string;
-  order_nsu: string | null;
-  customer_name: string | null;
-  customer_email: string | null;
-  customer_phone: string | null;
-  items: unknown;
-  subtotal: number | null;
-  shipping_price: number | null;
-  total_price: number | null;
-  payment_status: string | null;
-  status: string | null;
+  customer_id: string | null;
+  status: string;
+  payment_status: string;
+  shipping_status: string;
+  subtotal: number;
+  shipping_price: number;
+  total_price: number;
+  gateway: string;
+  gateway_reference: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
   shipping_address: unknown;
-  capture_method: string | null;
-  transaction_nsu: string | null;
-  invoice_slug: string | null;
-  receipt_url: string | null;
-  paid_at: string | null;
+  metadata: unknown;
   created_at: string;
+  updated_at: string;
 }
 
 export function useOrders() {

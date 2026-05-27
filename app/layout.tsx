@@ -15,10 +15,32 @@ const manrope = Manrope({
   variable: '--font-manrope',
 });
 
-export const metadata: Metadata = {
-  title: 'Luminar Joias | The Black Box',
-  description: 'Exclusividade e elegância em alta joalheria. Bem-vindo à Luminar Joias.',
-};
+import { settingsService } from '@/services/settings.service';
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const title = await settingsService.getSetting('seo_title', 'Luminar Joias | The Black Box');
+    const description = await settingsService.getSetting('seo_description', 'Exclusividade e elegância em alta joalheria. Bem-vindo à Luminar Joias.');
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        locale: 'pt_BR',
+        url: 'https://luminarjoias.com.br',
+        siteName: title,
+      }
+    };
+  } catch {
+    return {
+      title: 'Luminar Joias | The Black Box',
+      description: 'Exclusividade e elegância em alta joalheria. Bem-vindo à Luminar Joias.',
+    };
+  }
+}
 
 export default function RootLayout({
   children,

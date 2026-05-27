@@ -4,6 +4,11 @@ import { withSentryConfig } from '@sentry/nextjs';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  // Otimização para builds em sandboxes restritos de memória (CI/CD)
+  experimental: {
+    cpus: 1,
+  },
+
   // Corrigido: lint deve falhar o build para detectar problemas
   eslint: {
     ignoreDuringBuilds: false,
@@ -59,17 +64,23 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  // Sentry project config
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+// Se DISABLE_SENTRY for verdadeiro (comum em builds de sandboxes com pouca RAM),
+// exporta a configuração limpa do Next.js sem carregar plugins de Webpack pesados do Sentry.
+const finalConfig = process.env.DISABLE_SENTRY === 'true'
+  ? nextConfig
+  : withSentryConfig(nextConfig, {
+      // Sentry project config
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
 
-  // Silenciar output do Sentry no build
-  silent: !process.env.CI,
+      // Silenciar output do Sentry no build
+      silent: !process.env.CI,
 
-  // Upload source maps apenas em produção
-  disableLogger: true,
+      // Upload source maps apenas em produção
+      disableLogger: true,
 
-  // Não verificar versão em dev
-  autoInstrumentServerFunctions: process.env.NODE_ENV === 'production',
-});
+      // Não verificar versão em dev
+      autoInstrumentServerFunctions: process.env.NODE_ENV === 'production',
+    });
+
+export default finalConfig;

@@ -30,7 +30,8 @@ export default function OrdersPage() {
     return orders.filter((order) => {
       const matchesSearch =
         !search ||
-        order.order_nsu?.toLowerCase().includes(search.toLowerCase()) ||
+        order.gateway_reference?.toLowerCase().includes(search.toLowerCase()) ||
+        order.id.toLowerCase().includes(search.toLowerCase()) ||
         order.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
         order.customer_email?.toLowerCase().includes(search.toLowerCase());
 
@@ -142,7 +143,7 @@ export default function OrdersPage() {
                   return (
                     <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
                       <td className="px-6 py-4 font-medium text-white font-mono text-xs">
-                        {order.order_nsu ?? order.id.slice(0, 8)}
+                        {order.gateway_reference ?? `#ORD-${order.id.slice(0, 8).toUpperCase()}`}
                       </td>
                       <td className="px-6 py-4">
                         <div>
@@ -168,9 +169,9 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          {order.receipt_url && (
+                          {(order.metadata as any)?.receipt_url && (
                             <a
-                              href={order.receipt_url}
+                              href={(order.metadata as any).receipt_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-2 text-white/50 hover:text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-colors"
