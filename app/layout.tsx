@@ -25,6 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title,
       description,
+      icons: {
+        icon: [
+          { url: '/images/favicon.png', type: 'image/png' }
+        ],
+        shortcut: '/images/favicon.png',
+        apple: '/images/favicon.png',
+      },
       openGraph: {
         title,
         description,
@@ -38,6 +45,13 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: 'Luminar Joias | The Black Box',
       description: 'Exclusividade e elegância em alta joalheria. Bem-vindo à Luminar Joias.',
+      icons: {
+        icon: [
+          { url: '/images/favicon.png', type: 'image/png' }
+        ],
+        shortcut: '/images/favicon.png',
+        apple: '/images/favicon.png',
+      }
     };
   }
 }

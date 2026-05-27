@@ -108,15 +108,31 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="max-w-4xl space-y-6"
             >
-              {currentBanner.subtitle && (
-                <span className="font-sans text-[#f2ca50] text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.4em] block">
-                  {currentBanner.subtitle}
-                </span>
-              )}
-              
-              <h1 className="font-serif text-4xl sm:text-6xl md:text-[64px] text-[#e5e2e1] leading-tight tracking-wide">
-                {currentBanner.title}
-              </h1>
+              {(() => {
+                const isSubtitleLong = currentBanner.subtitle && currentBanner.subtitle.length > 40;
+                const eyebrow = isSubtitleLong ? 'ALTA JOALHERIA LUMINAR' : currentBanner.subtitle;
+                const description = isSubtitleLong ? currentBanner.subtitle : null;
+
+                return (
+                  <>
+                    {eyebrow && (
+                      <span className="font-sans text-[#f2ca50] text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.4em] block">
+                        {eyebrow}
+                      </span>
+                    )}
+                    
+                    <h1 className="font-serif text-4xl sm:text-6xl md:text-[64px] text-[#e5e2e1] leading-tight tracking-wide">
+                      {currentBanner.title}
+                    </h1>
+
+                    {description && (
+                      <p className="font-sans text-white/70 text-sm sm:text-base max-w-2xl mx-auto font-light leading-relaxed pt-2">
+                        {description}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
 
               <div className="w-12 h-[1px] bg-[#f2ca50]/50 mx-auto my-4"></div>
 

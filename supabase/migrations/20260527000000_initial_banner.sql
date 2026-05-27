@@ -1,5 +1,5 @@
 -- Migração Supabase: 20260527000000_initial_banner.sql
--- Garante de forma idempotente e segura a estrutura correta da tabela public.banners e insere o banner inicial premium
+-- Garante de forma idempotente e segura a estrutura correta da tabela public.banners e insere/atualiza o banner inicial premium
 
 -- 1. Garante que a tabela exista
 CREATE TABLE IF NOT EXISTS public.banners (
@@ -44,7 +44,24 @@ CREATE POLICY "Admins podem gerenciar banners" ON public.banners
     FOR ALL TO authenticated USING (public.is_admin() = true)
     WITH CHECK (public.is_admin() = true);
 
--- 6. Inserção do banner inicial de forma segura e idempotente, sem duplicar e sem apagar dados existentes
+-- 6. Atualização de banner inicial antigo de teste se ele já existir na base
+-- Evita duplicação atualizando o registro antigo para o novo formato de imagem e copy do banner
+UPDATE public.banners
+SET 
+    title = 'Elegância em cada detalhe.',
+    subtitle = 'Joias produzidas sob encomenda, com acabamento refinado e presença marcante.',
+    desktop_image_url = '/images/desktop.png',
+    mobile_image_url = '/images/mobile.png',
+    link_url = '/categoria',
+    button_text = 'Explorar coleção',
+    is_active = true,
+    hide_overlay = false
+WHERE 
+    title = 'Elegância em cada detalhe. Produzido sob encomenda.' 
+    OR desktop_image_url = '/images/banner.webp'
+    OR title = 'Elegância em cada detalhe.';
+
+-- 7. Inserção do banner inicial se nenhum registro do banner novo existir
 INSERT INTO public.banners (
     title,
     subtitle,
@@ -57,15 +74,15 @@ INSERT INTO public.banners (
     hide_overlay
 )
 SELECT 
-    'Elegância em cada detalhe. Produzido sob encomenda.',
-    'Alta Joalheria Luminar',
-    '/images/banner.webp',
-    '/images/banner.webp',
+    'Elegância em cada detalhe.',
+    'Joias produzidas sob encomenda, com acabamento refinado e presença marcante.',
+    '/images/desktop.png',
+    '/images/mobile.png',
     '/categoria',
-    'Explorar Coleção',
+    'Explorar coleção',
     0,
     true,
-    true
+    false
 WHERE NOT EXISTS (
-    SELECT 1 FROM public.banners WHERE title = 'Elegância em cada detalhe. Produzido sob encomenda.'
+    SELECT 1 FROM public.banners WHERE title = 'Elegância em cada detalhe.'
 );
