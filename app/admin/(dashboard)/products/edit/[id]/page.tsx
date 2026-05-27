@@ -4,11 +4,12 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ArrowLeft, UploadCloud, Save, Loader2, Star, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, UploadCloud, Save, Loader2, Star, Trash2, X, ChevronLeft, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import { productService } from '@/services/product.service';
 import { storageService } from '@/services/storage.service';
 import { categoryService, Category } from '@/services/category.service';
 import { ProductOptionsManager } from '@/components/admin/ProductOptionsManager';
+import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
@@ -36,6 +37,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategorySlug, setNewCategorySlug] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -185,6 +187,42 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       setPendingDeletions(prev => [...prev, item.url]);
       toast.success('Imagem removida da galeria temporariamente.');
     }
+  };
+
+  // Selecionar imagens da biblioteca de mídias do storage
+  const handleSelectFromStorage = (urls: string[]) => {
+    // Filtra as URLs que já estão na galeria local do produto para impedir duplicidades
+    const newUrls = urls.filter(url => !mediaList.some(item => item.url === url));
+    
+    if (newUrls.length === 0) {
+      toast.error('As imagens selecionadas já estão na galeria do produto.');
+      return;
+    }
+
+    const newMediaItems: ProductMedia[] = newUrls.map((url, idx) => ({
+      url,
+      position: mediaList.length + idx,
+      is_primary: false,
+      uploading: false
+    }));
+
+    setMediaList(prev => {
+      const updated = [...prev, ...newMediaItems];
+      
+      // Auto-eleger imagem principal se nenhuma for marcada ou se a galeria estava vazia
+      const hasPrimary = updated.some(item => item.is_primary);
+      if (!hasPrimary && updated.length > 0) {
+        updated[0].is_primary = true;
+      }
+      
+      // Reordena as posições
+      return updated.map((item, index) => ({
+        ...item,
+        position: index
+      }));
+    });
+
+    toast.success(`${newUrls.length} imagem(ns) adicionada(s) do Storage!`);
   };
 
   const handleMoveMedia = (index: number, direction: 'left' | 'right') => {
@@ -394,6 +432,18 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 ))}
               </div>
             )}
+
+            {/* Seletor de Imagens do Storage */}
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setShowMediaLibrary(true)}
+                className="w-full py-3.5 border border-dashed border-[#d4af37]/35 bg-[#d4af37]/5 hover:border-[#d4af37]/80 text-[#d4af37] text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-xl flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                Selecionar do Storage
+              </button>
+            </div>
 
             <div className={`relative border-2 border-dashed ${uploadingImages ? 'border-[#d4af37]/50 bg-[#d4af37]/5' : 'border-white/10 hover:border-[#d4af37]/50 hover:bg-[#d4af37]/5'} rounded-xl p-8 text-center transition-all cursor-pointer`}>
               <input type="file" multiple accept="image/*" onChange={handleMediaUpload} disabled={uploadingImages} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
@@ -637,6 +687,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </motion.div>
         </div>
       )}
+
+      <MediaLibraryModal
+        isOpen={showMediaLibrary}
+        onClose={() => setShowMediaLibrary(false)}
+        onSelectImages={handleSelectFromStorage}
+        allowMultiple={true}
+      />
     </div>
   );
 }

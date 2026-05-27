@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { bannerService, BannerRow } from '@/services/banner.service';
 import { storageService } from '@/services/storage.service';
+import { MediaLibraryModal } from '@/components/admin/MediaLibraryModal';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
@@ -29,6 +30,8 @@ export default function BannersPage() {
   const [uploadingMobile, setUploadingMobile] = useState(false);
   const [banners, setBanners] = useState<BannerRow[]>([]);
   const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<'desktop' | 'mobile' | null>(null);
 
   // Form local para criação e edição de banner
   const [formData, setFormData] = useState({
@@ -56,6 +59,19 @@ export default function BannersPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadBanners();
   }, []);
+
+  const handleSelectFromStorage = (urls: string[]) => {
+    if (urls.length === 0 || !mediaTarget) return;
+
+    const selectedUrl = urls[0];
+    setFormData(prev => ({
+      ...prev,
+      [mediaTarget === 'desktop' ? 'desktop_image_url' : 'mobile_image_url']: selectedUrl
+    }));
+
+    toast.success(`Imagem ${mediaTarget} selecionada do Storage!`);
+    setMediaTarget(null);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -255,16 +271,28 @@ export default function BannersPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative border border-dashed border-white/10 rounded-lg p-4 text-center hover:border-[#d4af37]/40 transition-all cursor-pointer">
-                    <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'desktop')} disabled={uploadingDesktop} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
-                    {uploadingDesktop ? (
-                      <Loader2 className="w-5 h-5 text-[#d4af37] mx-auto animate-spin" />
-                    ) : (
-                      <>
-                        <UploadCloud className="w-5 h-5 text-white/30 mx-auto mb-1" />
-                        <span className="text-[10px] text-white/40 font-mono">Upload Desktop (WebP Comp.)</span>
-                      </>
-                    )}
+                  <div className="flex gap-2 mb-2">
+                    <div className="relative flex-grow border border-dashed border-white/10 rounded-lg p-3 text-center hover:border-[#d4af37]/40 transition-all cursor-pointer">
+                      <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'desktop')} disabled={uploadingDesktop} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
+                      {uploadingDesktop ? (
+                        <Loader2 className="w-4 h-4 text-[#d4af37] mx-auto animate-spin" />
+                      ) : (
+                        <>
+                          <UploadCloud className="w-4 h-4 text-white/30 mx-auto mb-0.5" />
+                          <span className="text-[9px] text-white/40 font-mono">Upload Local</span>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMediaTarget('desktop');
+                        setShowMediaLibrary(true);
+                      }}
+                      className="px-3 border border-[#d4af37]/35 hover:border-[#d4af37]/80 bg-[#d4af37]/5 text-[#d4af37] text-[10px] font-bold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1 active:scale-[0.98] cursor-pointer"
+                    >
+                      Storage
+                    </button>
                   </div>
                 )}
               </div>
@@ -280,16 +308,28 @@ export default function BannersPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative border border-dashed border-white/10 rounded-lg p-4 text-center hover:border-[#d4af37]/40 transition-all cursor-pointer">
-                    <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'mobile')} disabled={uploadingMobile} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
-                    {uploadingMobile ? (
-                      <Loader2 className="w-5 h-5 text-[#d4af37] mx-auto animate-spin" />
-                    ) : (
-                      <>
-                        <UploadCloud className="w-5 h-5 text-white/30 mx-auto mb-1" />
-                        <span className="text-[10px] text-white/40 font-mono">Upload Mobile (WebP Comp.)</span>
-                      </>
-                    )}
+                  <div className="flex gap-2 mb-2">
+                    <div className="relative flex-grow border border-dashed border-white/10 rounded-lg p-3 text-center hover:border-[#d4af37]/40 transition-all cursor-pointer">
+                      <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'mobile')} disabled={uploadingMobile} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
+                      {uploadingMobile ? (
+                        <Loader2 className="w-4 h-4 text-[#d4af37] mx-auto animate-spin" />
+                      ) : (
+                        <>
+                          <UploadCloud className="w-4 h-4 text-white/30 mx-auto mb-0.5" />
+                          <span className="text-[9px] text-white/40 font-mono">Upload Local</span>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMediaTarget('mobile');
+                        setShowMediaLibrary(true);
+                      }}
+                      className="px-3 border border-[#d4af37]/35 hover:border-[#d4af37]/80 bg-[#d4af37]/5 text-[#d4af37] text-[10px] font-bold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1 active:scale-[0.98] cursor-pointer"
+                    >
+                      Storage
+                    </button>
                   </div>
                 )}
               </div>
@@ -422,6 +462,17 @@ export default function BannersPage() {
           </div>
         </div>
       </div>
+      {/* Modal de Mídia */}
+      <MediaLibraryModal
+        isOpen={showMediaLibrary}
+        onClose={() => {
+          setShowMediaLibrary(false);
+          setMediaTarget(null);
+        }}
+        onSelectImages={handleSelectFromStorage}
+        allowMultiple={false}
+        title={`Selecionar Imagem do Banner (${mediaTarget === 'desktop' ? 'Desktop' : 'Mobile'})`}
+      />
     </div>
   );
 }
