@@ -73,24 +73,32 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
             transition={{ duration: 1 }}
             className="absolute inset-0 w-full h-full"
           >
-            {/* Tag picture para suporte de imagens duais responsivas e leves no Mobile */}
-            <picture className="w-full h-full">
-              <source media="(max-width: 768px)" srcSet={currentBanner.mobile_image_url || currentBanner.desktop_image_url} />
-              <img 
-                src={currentBanner.desktop_image_url} 
-                alt={currentBanner.title} 
-                className={`w-full h-full object-center pointer-events-none transition-all duration-350 ${
-                  currentBanner.hide_overlay 
-                    ? 'object-contain md:object-cover bg-[#131313]' 
-                    : 'object-cover'
+            {/*
+              FIX: <picture> é display:inline por padrão.
+              Com h-full em um elemento inline, height:100% não funciona,
+              colapsando a imagem para 0px de altura.
+              Solução: absolute inset-0 em ambos picture e img.
+            */}
+            <picture className="absolute inset-0 block">
+              <source
+                media="(max-width: 768px)"
+                srcSet={currentBanner.mobile_image_url || currentBanner.desktop_image_url}
+              />
+              <img
+                src={currentBanner.desktop_image_url}
+                alt={currentBanner.title}
+                className={`absolute inset-0 w-full h-full pointer-events-none ${
+                  currentBanner.hide_overlay
+                    ? 'object-contain md:object-cover'
+                    : 'object-cover object-center'
                 }`}
                 referrerPolicy="no-referrer"
               />
             </picture>
-            
-            {/* Overlay Gradiente de Luxo */}
+
+            {/* Overlay Gradiente — menos agressivo no mobile para não encobrir a joia */}
             {!currentBanner.hide_overlay && (
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#131313] opacity-90"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-[#131313]/90" />
             )}
           </motion.div>
         </AnimatePresence>
