@@ -7,12 +7,16 @@ const notoSerif = Noto_Serif({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-noto-serif',
+  display: 'swap',
+  preload: false,
 });
 
 const manrope = Manrope({
   subsets: ['latin'],
   weight: ['300', '400', '600'],
   variable: '--font-manrope',
+  display: 'swap',
+  preload: false,
 });
 
 import { settingsService } from '@/services/settings.service';

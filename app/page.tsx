@@ -7,7 +7,7 @@ import { bannerService } from "@/services/banner.service";
 import { cmsService } from "@/services/cms.service";
 import { categoryService } from "@/services/category.service";
 import { BannerCarousel } from "@/components/storefront/BannerCarousel";
-import { Truck, BadgeCheck, Gift } from 'lucide-react';
+import { PackageCheck, BadgeCheck, Sparkles } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
 
 // Next.js 15: Caching dinâmico de alto desempenho baseado em tags e invalidação imediata.
@@ -76,14 +76,14 @@ export default async function Home() {
 
           // --- 2. BENEFITS ROW ---
           case 'benefits':
-            const benefit1 = payload.benefit1_title || 'Frete Grátis';
+            const benefit1 = payload.benefit1_title || 'Envio Rastreado';
             const benefit2 = payload.benefit2_title || 'Garantia Vitalícia';
-            const benefit3 = payload.benefit3_title || 'Embalagem Luxo';
+            const benefit3 = payload.benefit3_title || 'Atendimento Personalizado';
             return (
               <section key={section.section_key} className="bg-[#131313] py-8 border-y border-white/5 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 sm:px-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                   <FadeIn delay={0.1} direction="left" className="flex flex-col items-center gap-4">
-                    <Truck className="text-[#f2ca50] w-8 h-8" strokeWidth={1.5} />
+                    <PackageCheck className="text-[#f2ca50] w-8 h-8" strokeWidth={1.5} />
                     <p className="font-sans text-[12px] font-bold uppercase tracking-widest text-white/70">{benefit1}</p>
                   </FadeIn>
                   <FadeIn delay={0.2} direction="up" className="flex flex-col items-center gap-4">
@@ -91,7 +91,7 @@ export default async function Home() {
                     <p className="font-sans text-[12px] font-bold uppercase tracking-widest text-white/70">{benefit2}</p>
                   </FadeIn>
                   <FadeIn delay={0.3} direction="right" className="flex flex-col items-center gap-4">
-                    <Gift className="text-[#f2ca50] w-8 h-8" strokeWidth={1.5} />
+                    <Sparkles className="text-[#f2ca50] w-8 h-8" strokeWidth={1.5} />
                     <p className="font-sans text-[12px] font-bold uppercase tracking-widest text-white/70">{benefit3}</p>
                   </FadeIn>
                 </div>
@@ -127,10 +127,13 @@ export default async function Home() {
             );
 
           // --- 4. CATEGORIES SECTION ---
-          case 'categories':
-            const catTitle = payload.title || 'Coleções Exclusivas';
+          case 'categories': {
+            const catTitle = payload.title || 'Nossas Coleções';
 
             if (categories.length === 0) return null;
+
+            // Mostrar até 6 categorias
+            const visibleCats = categories.slice(0, 6);
 
             return (
               <section key={section.section_key} className="bg-[#0e0e0e] py-24 sm:py-32 overflow-hidden">
@@ -142,34 +145,48 @@ export default async function Home() {
                     </div>
                   </FadeIn>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {categories.slice(0, 3).map((cat, index) => {
-                      const image = cat.image_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBSWIv6G539hpUq8MqIB1g7Gg9oR15Ptr18vuPP2y4UkMGAnT_Fk5mo6ZY8in5xv2rALiX5OaeFYWZSTMbKZIjIKiy2qXyvU65VyhqRZ3YG-4Lt3W2Ev8xFB_L6BU1VbgKnHKuqc6YFRDkmxfWiF1O36Hn2M3lN4IdjmL8se-OXAhUS_u_i2w-jZ4NfafnnCk5YAY2xblUJ0s7GCTgTjzoYaSsd_VqVGgU5uCD93m1m8Yz1nzU4OK6r2kGdF5r8DXa662s_G92-Heo';
-                      return (
-                        <FadeIn key={cat.id} delay={(index + 1) * 0.1} direction="up">
-                          <Link href={`/categoria?slug=${cat.slug}`} className="relative group h-[400px] sm:h-[500px] overflow-hidden block border border-white/5">
+                  <div className={`grid gap-6 ${
+                    visibleCats.length <= 3
+                      ? 'grid-cols-1 md:grid-cols-3'
+                      : 'grid-cols-2 md:grid-cols-3'
+                  }`}>
+                    {visibleCats.map((cat, index) => (
+                      <FadeIn key={cat.id} delay={(index + 1) * 0.08} direction="up">
+                        <Link
+                          href={`/categoria?categoria=${encodeURIComponent(cat.slug)}`}
+                          className="relative group h-[300px] sm:h-[420px] overflow-hidden block border border-white/5"
+                        >
+                          {cat.image_url ? (
                             <Image
-                              src={image}
+                              src={cat.image_url}
                               alt={cat.name}
                               fill
                               className="object-cover transition-transform duration-1000 group-hover:scale-105"
                               referrerPolicy="no-referrer"
                             />
-                            <div className="absolute inset-0 bg-black/55 group-hover:bg-black/35 transition-colors duration-500"></div>
-                            <div className="absolute bottom-10 left-8 sm:bottom-12 sm:left-12">
-                              <h3 className="font-serif text-2xl text-white uppercase tracking-[0.2em] mb-4">{cat.name}</h3>
-                              <span className="font-sans text-[11px] font-bold text-[#f2ca50] uppercase tracking-widest border-b border-[#f2ca50]/30 pb-1 group-hover:border-[#f2ca50] transition-colors duration-300">
-                                Ver Coleção
+                          ) : (
+                            // Fallback elegante sem imagem externa
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+                              <span className="font-serif text-6xl text-[#f2ca50]/10 uppercase tracking-widest select-none">
+                                {cat.name.charAt(0)}
                               </span>
                             </div>
-                          </Link>
-                        </FadeIn>
-                      );
-                    })}
+                          )}
+                          <div className="absolute inset-0 bg-black/55 group-hover:bg-black/35 transition-colors duration-500"></div>
+                          <div className="absolute bottom-8 left-6 sm:bottom-10 sm:left-10">
+                            <h3 className="font-serif text-xl text-white uppercase tracking-[0.2em] mb-3">{cat.name}</h3>
+                            <span className="font-sans text-[11px] font-bold text-[#f2ca50] uppercase tracking-widest border-b border-[#f2ca50]/30 pb-1 group-hover:border-[#f2ca50] transition-colors duration-300">
+                              Ver Coleção
+                            </span>
+                          </div>
+                        </Link>
+                      </FadeIn>
+                    ))}
                   </div>
                 </div>
               </section>
             );
+          }
 
           // --- 5. FINAL CTA SECTOR ---
           case 'cta':

@@ -5,32 +5,60 @@ export interface Category {
   name: string;
   slug: string;
   image_url?: string | null;
+  is_active?: boolean;
+  position?: number | null;
   created_at?: string;
 }
 
 export const categoryService = {
+  /**
+   * listCategories: Retorna categorias ativas ordenadas por position ASC.
+   * Funciona mesmo se os campos is_active/position não existirem na tabela.
+   */
   async listCategories(): Promise<Category[]> {
     try {
       const { data, error } = await (supabase as any)
         .from('categories')
-        .select('*')
+        .select('id, name, slug, image_url, is_active, position, created_at')
         .order('name', { ascending: true });
 
       if (error) {
         if (error.code === '42P01') {
-          console.warn('Tabela categories não existe ainda.');
+          // Tabela ainda não existe
+          console.warn('[categoryService] Tabela categories não existe ainda.');
           return [];
         }
         throw error;
       }
-      return data || [];
-    } catch (err: any) {
-      console.error('Erro ao listar categorias:', err.message);
+
+      const rows: Category[] = data ?? [];
+
+      // Filtrar apenas ativas (se o campo existir na resposta)
+      const active = rows.filter(
+        (c) => c.is_active === undefined || c.is_active === null || c.is_active === true
+      );
+
+      // Ordenar por position ASC (se existir), depois por name
+      active.sort((a, b) => {
+        const posA = a.position ?? 9999;
+        const posB = b.position ?? 9999;
+        if (posA !== posB) return posA - posB;
+        return a.name.localeCompare(b.name, 'pt-BR');
+      });
+
+      return active;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      console.error('[categoryService] Erro ao listar categorias:', message);
       return [];
     }
   },
 
-  async createCategory(category: { name: string; slug: string; image_url?: string | null }): Promise<Category | null> {
+  async createCategory(category: {
+    name: string;
+    slug: string;
+    image_url?: string | null;
+  }): Promise<Category | null> {
     const { data, error } = await (supabase as any)
       .from('categories')
       .insert([category])
@@ -41,7 +69,10 @@ export const categoryService = {
     return data;
   },
 
-  async updateCategory(id: string, updates: { name?: string; slug?: string; image_url?: string | null }): Promise<Category | null> {
+  async updateCategory(
+    id: string,
+    updates: { name?: string; slug?: string; image_url?: string | null }
+  ): Promise<Category | null> {
     const { data, error } = await (supabase as any)
       .from('categories')
       .update(updates)
@@ -60,5 +91,5 @@ export const categoryService = {
       .eq('id', id);
 
     if (error) throw new Error(error.message);
-  }
+  },
 };
