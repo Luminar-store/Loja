@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, getAdminSessionUser } from '@/lib/supabase-server';
+import { generateUniqueSlug } from '@/lib/slug';
 
 /**
  * POST /api/admin/products
@@ -30,7 +31,15 @@ export async function POST(req: Request) {
     );
   }
 
-  // 4. Executar inserção usando o cliente Admin (bypass RLS)
+  // 4. Garantir a geração do slug
+  let slug = body.slug;
+  if (!slug || slug.trim() === '') {
+    slug = await generateUniqueSlug(body.name);
+  } else {
+    slug = await generateUniqueSlug(body.slug);
+  }
+
+  // 5. Executar inserção usando o cliente Admin (bypass RLS)
   const supabase = createAdminClient();
 
   try {
@@ -39,7 +48,7 @@ export async function POST(req: Request) {
       .insert([
         {
           name: body.name,
-          slug: body.slug || null,
+          slug: slug,
           description: body.description || null,
           price: body.price,
           promotional_price: body.promotional_price ?? null,

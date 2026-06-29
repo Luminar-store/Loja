@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, getAdminSessionUser } from '@/lib/supabase-server';
+import { generateUniqueSlug } from '@/lib/slug';
 
 /**
  * PUT /api/admin/products/[id]
@@ -32,12 +33,22 @@ export async function PUT(
   // 3. Executar atualização usando o cliente Admin
   const supabase = createAdminClient();
 
+  // 3.1 Garantir a geração/atualização do slug (na edição completa, o body.slug ou body.name dita o slug)
+  let slug = body.slug;
+  if (!slug || slug.trim() === '') {
+    if (body.name) {
+      slug = await generateUniqueSlug(body.name, id);
+    }
+  } else {
+    slug = await generateUniqueSlug(body.slug, id);
+  }
+
   try {
     const { data, error } = await supabase
       .from('products')
       .update({
         name: body.name,
-        slug: body.slug,
+        slug: slug,
         description: body.description,
         price: body.price,
         promotional_price: body.promotional_price,
@@ -182,6 +193,25 @@ export async function PATCH(
 
   if (Object.keys(updateData).length === 0 && !body.media && !body.image_url) {
     return NextResponse.json({ error: 'Nenhum campo válido para atualização fornecido' }, { status: 400 });
+  }
+
+  // 3.1 Garantir slug na atualização parcial se o nome ou slug mudou
+  if (updateData.slug) {
+    if (updateData.slug.trim() === '') {
+      // se veio slug em branco mas com name novo, usa o name novo ou falha
+      if (updateData.name) {
+        updateData.slug = await generateUniqueSlug(updateData.name, id);
+      } else {
+        // não tem como gerar um slug de algo não enviado, mantém o original no DB não mandando no updateData
+        delete updateData.slug;
+      }
+    } else {
+      updateData.slug = await generateUniqueSlug(updateData.slug, id);
+    }
+  } else if (updateData.name && !updateData.slug && body.slug === undefined) {
+    // Se mudou o nome mas não mandou slug, pode ser que o usuário queira autogerar o slug.
+    // Opcional: Para manter comportamento previsível de PATCH, se não mandar slug, não toca no slug.
+    // Caso contrário: updateData.slug = await generateUniqueSlug(updateData.name, id);
   }
 
   // 4. Executar atualização usando o cliente Admin
