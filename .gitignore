@@ -18,3 +18,14 @@ coverage/
 
 # Apenas o template com placeholders Ã© permitido
 !.env.example
+
+# Auditoria e Arquivos Temporários
+audit_*
+schema_*
+tools_output.json
+validation_report.txt
+*.dump
+*.bak
+*.tmp
+scratch/
+
