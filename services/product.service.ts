@@ -43,8 +43,8 @@ export const productService = {
 
         return {
           ...prod,
-          image_url: primaryImg ? primaryImg.url : null,
-          images: sortedImgs.map(img => img.url)
+          image_url: primaryImg ? primaryImg.url : ((prod as any).image_url || null),
+          images: sortedImgs.length > 0 ? sortedImgs.map(img => img.url) : ((prod as any).images || [])
         } as ProductRow;
       });
     } catch (err: any) {
@@ -113,8 +113,8 @@ export const productService = {
 
       return {
         ...data,
-        image_url: primaryImg ? primaryImg.url : null,
-        images: sortedImgs.map(img => img.url)
+        image_url: primaryImg ? primaryImg.url : ((data as any).image_url || null),
+        images: sortedImgs.length > 0 ? sortedImgs.map(img => img.url) : ((data as any).images || [])
       } as ProductRow;
     } catch (err: any) {
       console.error(`Erro ao obter produto ${id}:`, err.message);
@@ -265,8 +265,8 @@ export const productService = {
 
         return {
           ...prod,
-          image_url: primaryImg ? primaryImg.url : null,
-          images: sortedImgs.map(img => img.url)
+          image_url: primaryImg ? primaryImg.url : ((prod as any).image_url || null),
+          images: sortedImgs.length > 0 ? sortedImgs.map(img => img.url) : ((prod as any).images || [])
         } as ProductRow;
       });
     } catch (err: any) {

@@ -43,6 +43,43 @@ export async function PUT(
     slug = await generateUniqueSlug(body.slug, id);
   }
 
+  // 3.2 Parse de imagens para unificar a arquitetura
+  const mediaList: { url: string; position: number; is_primary: boolean }[] = [];
+
+  if (body.media && Array.isArray(body.media)) {
+    body.media.forEach((item: any, index: number) => {
+      mediaList.push({
+        url: item.url,
+        position: item.position ?? index,
+        is_primary: !!item.is_primary
+      });
+    });
+  } else {
+    // Fallback de compatibilidade transparente
+    if (body.image_url) {
+      mediaList.push({
+        url: body.image_url,
+        position: 0,
+        is_primary: true
+      });
+    }
+    if (body.images && Array.isArray(body.images)) {
+      body.images.forEach((img: string, idx: number) => {
+        if (img !== body.image_url) {
+          mediaList.push({
+            url: img,
+            position: idx + 1,
+            is_primary: false
+          });
+        }
+      });
+    }
+  }
+
+  const fallbackPrimaryImg = mediaList.find(m => m.is_primary) || mediaList[0];
+  const fallbackImageUrl = fallbackPrimaryImg ? fallbackPrimaryImg.url : null;
+  const fallbackImages = mediaList.length > 0 ? mediaList.map(m => m.url) : null;
+
   try {
     const { data, error } = await supabase
       .from('products')
@@ -59,7 +96,8 @@ export async function PUT(
         weight: body.weight,
         width: body.width,
         height: body.height,
-        images: body.images, // mantém como fallback, mas a Source of Truth é product_images
+        image_url: fallbackImageUrl !== null ? fallbackImageUrl : undefined,
+        images: fallbackImages !== null ? fallbackImages : undefined,
         is_featured: body.is_featured,
         is_made_to_order: body.is_made_to_order,
       })
@@ -73,37 +111,7 @@ export async function PUT(
     }
 
     // 4. Sincronizar imagens de forma atômica na tabela vinculada product_images
-    const mediaList: { url: string; position: number; is_primary: boolean }[] = [];
-
-    if (body.media && Array.isArray(body.media)) {
-      body.media.forEach((item: any, index: number) => {
-        mediaList.push({
-          url: item.url,
-          position: item.position ?? index,
-          is_primary: !!item.is_primary
-        });
-      });
-    } else {
-      // Fallback de compatibilidade transparente
-      if (body.image_url) {
-        mediaList.push({
-          url: body.image_url,
-          position: 0,
-          is_primary: true
-        });
-      }
-      if (body.images && Array.isArray(body.images)) {
-        body.images.forEach((img: string, idx: number) => {
-          if (img !== body.image_url) {
-            mediaList.push({
-              url: img,
-              position: idx + 1,
-              is_primary: false
-            });
-          }
-        });
-      }
-    }
+    // (a lógica de parsing de mediaList foi movida para cima para alimentar o fallback da tabela products)
 
     // Deleta os registros antigos de mídias do produto
     await supabase
@@ -212,6 +220,26 @@ export async function PATCH(
     // Se mudou o nome mas não mandou slug, pode ser que o usuário queira autogerar o slug.
     // Opcional: Para manter comportamento previsível de PATCH, se não mandar slug, não toca no slug.
     // Caso contrário: updateData.slug = await generateUniqueSlug(updateData.name, id);
+  }
+
+  // 3.2 Parsing de mídias para fallback na tabela products
+  if (body.media && Array.isArray(body.media)) {
+    const mediaList: { url: string; position: number; is_primary: boolean }[] = [];
+    body.media.forEach((item: any, index: number) => {
+      mediaList.push({
+        url: item.url,
+        position: item.position ?? index,
+        is_primary: !!item.is_primary
+      });
+    });
+
+    const fallbackPrimaryImg = mediaList.find(m => m.is_primary) || mediaList[0];
+    if (fallbackPrimaryImg) {
+      updateData.image_url = fallbackPrimaryImg.url;
+    }
+    if (mediaList.length > 0) {
+      updateData.images = mediaList.map(m => m.url);
+    }
   }
 
   // 4. Executar atualização usando o cliente Admin

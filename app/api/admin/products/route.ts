@@ -39,6 +39,42 @@ export async function POST(req: Request) {
     slug = await generateUniqueSlug(body.slug);
   }
 
+    // 4.1 Parse de imagens para unificar a arquitetura
+    const mediaList: { url: string; position: number; is_primary: boolean }[] = [];
+
+    if (body.media && Array.isArray(body.media)) {
+      body.media.forEach((item: any, index: number) => {
+        mediaList.push({
+          url: item.url,
+          position: item.position ?? index,
+          is_primary: !!item.is_primary
+        });
+      });
+    } else {
+      if (body.image_url) {
+        mediaList.push({
+          url: body.image_url,
+          position: 0,
+          is_primary: true
+        });
+      }
+      if (body.images && Array.isArray(body.images)) {
+        body.images.forEach((img: string, idx: number) => {
+          if (img !== body.image_url) {
+            mediaList.push({
+              url: img,
+              position: idx + 1,
+              is_primary: false
+            });
+          }
+        });
+      }
+    }
+
+    const fallbackPrimaryImg = mediaList.find(m => m.is_primary) || mediaList[0];
+    const fallbackImageUrl = fallbackPrimaryImg ? fallbackPrimaryImg.url : null;
+    const fallbackImages = mediaList.length > 0 ? mediaList.map(m => m.url) : null;
+
   // 5. Executar inserção usando o cliente Admin (bypass RLS)
   const supabase = createAdminClient();
 
@@ -59,7 +95,8 @@ export async function POST(req: Request) {
           weight: body.weight ?? null,
           width: body.width ?? null,
           height: body.height ?? null,
-          images: body.images || null, // mantém como fallback, mas a Source of Truth é product_images
+          image_url: fallbackImageUrl,
+          images: fallbackImages,
           is_featured: !!body.is_featured,
           is_made_to_order: !!body.is_made_to_order,
         },
@@ -73,39 +110,7 @@ export async function POST(req: Request) {
     }
 
     // 5. Inserir imagens na tabela profissional product_images
-    const mediaList: { url: string; position: number; is_primary: boolean }[] = [];
-
-    if (body.media && Array.isArray(body.media)) {
-      // Formato Profissional CMS-driven
-      body.media.forEach((item: any, index: number) => {
-        mediaList.push({
-          url: item.url,
-          position: item.position ?? index,
-          is_primary: !!item.is_primary
-        });
-      });
-    } else {
-      // Fallback de compatibilidade transparente para payloads legados
-      if (body.image_url) {
-        mediaList.push({
-          url: body.image_url,
-          position: 0,
-          is_primary: true
-        });
-      }
-      if (body.images && Array.isArray(body.images)) {
-        body.images.forEach((img: string, idx: number) => {
-          // Evita duplicar a imagem principal
-          if (img !== body.image_url) {
-            mediaList.push({
-              url: img,
-              position: idx + 1,
-              is_primary: false
-            });
-          }
-        });
-      }
-    }
+    // (a lógica de parsing de mediaList foi movida para cima para alimentar o fallback da tabela products)
 
     if (mediaList.length > 0) {
       const imagesToInsert = mediaList.map(media => ({

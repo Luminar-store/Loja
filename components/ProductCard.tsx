@@ -9,9 +9,11 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const isLimited = product.stock !== null && product.stock <= 5;
-  const imageUrl = product.images && product.images.length > 0 
-    ? product.images[0] 
-    : 'https://picsum.photos/seed/placeholder/800/1000'; // fallback
+  const imageUrl = product.image_url
+    ? product.image_url
+    : (product.images && product.images.length > 0
+        ? product.images[0]
+        : 'https://picsum.photos/seed/placeholder/800/1000'); // fallback
     
   return (
     <Link href={`/produto/${product.id}`} className="group block cursor-pointer">
