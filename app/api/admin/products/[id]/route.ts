@@ -43,6 +43,13 @@ export async function PUT(
     slug = await generateUniqueSlug(body.slug, id);
   }
 
+  // 3.1.5 Buscar category_id com base no nome para compatibilidade
+  let categoryId = null;
+  if (body.category) {
+    const { data: cat } = await supabase.from('categories').select('id').eq('name', body.category).single();
+    if (cat) categoryId = cat.id;
+  }
+
   // 3.2 Parse de imagens para unificar a arquitetura
   const mediaList: { url: string; position: number; is_primary: boolean }[] = [];
 
@@ -92,6 +99,7 @@ export async function PUT(
         stock: body.stock,
         status: body.status,
         category: body.category,
+        category_id: categoryId,
         material: body.material,
         weight: body.weight,
         width: body.width,
@@ -220,6 +228,13 @@ export async function PATCH(
     // Se mudou o nome mas não mandou slug, pode ser que o usuário queira autogerar o slug.
     // Opcional: Para manter comportamento previsível de PATCH, se não mandar slug, não toca no slug.
     // Caso contrário: updateData.slug = await generateUniqueSlug(updateData.name, id);
+  }
+
+  // 3.1.5 Buscar category_id com base no nome para compatibilidade na atualização parcial
+  if (updateData.category) {
+    const supabaseClient = createAdminClient();
+    const { data: cat } = await supabaseClient.from('categories').select('id').eq('name', updateData.category).single();
+    if (cat) updateData.category_id = cat.id;
   }
 
   // 3.2 Parsing de mídias para fallback na tabela products

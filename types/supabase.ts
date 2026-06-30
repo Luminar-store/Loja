@@ -16,6 +16,7 @@ export interface Database {
           name: string
           description: string | null
           category: string | null
+          category_id: string | null
           price: number
           promotional_price: number | null
           stock: number
@@ -36,6 +37,7 @@ export interface Database {
           name: string
           description?: string | null
           category?: string | null
+          category_id?: string | null
           price: number
           promotional_price?: number | null
           stock?: number
@@ -56,6 +58,7 @@ export interface Database {
           name?: string
           description?: string | null
           category?: string | null
+          category_id?: string | null
           price?: number
           promotional_price?: number | null
           stock?: number

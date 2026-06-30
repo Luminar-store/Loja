@@ -31,12 +31,20 @@ export async function POST(req: Request) {
     );
   }
 
-  // 4. Garantir a geração do slug
+  // 3.1 Garantir a geração do slug
   let slug = body.slug;
   if (!slug || slug.trim() === '') {
     slug = await generateUniqueSlug(body.name);
   } else {
     slug = await generateUniqueSlug(body.slug);
+  }
+
+  // 3.2 Buscar category_id com base no nome da categoria para compatibilidade legada
+  let categoryId = null;
+  if (body.category) {
+    const supabaseClient = createAdminClient();
+    const { data: cat } = await supabaseClient.from('categories').select('id').eq('name', body.category).single();
+    if (cat) categoryId = cat.id;
   }
 
     // 4.1 Parse de imagens para unificar a arquitetura
@@ -91,6 +99,7 @@ export async function POST(req: Request) {
           stock: body.stock ?? 0,
           status: body.status || 'draft', // Usa o status padrão draft da Fase 2
           category: body.category || null,
+          category_id: categoryId,
           material: body.material || null,
           weight: body.weight ?? null,
           width: body.width ?? null,

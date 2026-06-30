@@ -276,6 +276,101 @@ export const productService = {
   },
 
   /**
+   * listNewArrivals: Retorna os produtos mais recentes limitados, com prioridade para destaques.
+   * Completa os destacados com os recém-criados.
+   */
+  async listNewArrivals(limit: number = 6): Promise<ProductRow[]> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          product_images (
+            id,
+            url,
+            position,
+            is_primary
+          )
+        `)
+        .eq('status', 'active')
+        .order('is_featured', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        if (error.code === '42P01' || error.message.includes('product_images') || error.message.includes('column')) {
+          console.warn('Fallback ativado no listNewArrivals por tabela inexistente.');
+          return this.listProductsFallback().then(list => 
+            list.filter(p => p.status === 'active')
+                .sort((a, b) => (b.is_featured === a.is_featured ? 0 : b.is_featured ? 1 : -1) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, limit)
+          );
+        }
+        throw new Error(error.message);
+      }
+
+      return (data || []).map(prod => {
+        const imgs = (prod as any).product_images || [];
+        const sortedImgs = [...imgs].sort((a, b) => a.position - b.position);
+        const primaryImg = sortedImgs.find(img => img.is_primary) || sortedImgs[0];
+
+        return {
+          ...prod,
+          image_url: primaryImg ? primaryImg.url : ((prod as any).image_url || null),
+          images: sortedImgs.length > 0 ? sortedImgs.map(img => img.url) : ((prod as any).images || [])
+        } as ProductRow;
+      });
+    } catch (err: any) {
+      console.error('Erro ao listar novidades:', err.message);
+      return [];
+    }
+  },
+
+  /**
+   * listActiveProducts: Retorna todos os produtos ativos para agrupamento local (evita N+1).
+   */
+  async listActiveProducts(): Promise<ProductRow[]> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          product_images (
+            id,
+            url,
+            position,
+            is_primary
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        if (error.code === '42P01' || error.message.includes('product_images') || error.message.includes('column')) {
+          console.warn('Fallback ativado no listActiveProducts por tabela inexistente.');
+          return this.listProductsFallback().then(list => list.filter(p => p.status === 'active'));
+        }
+        throw new Error(error.message);
+      }
+
+      return (data || []).map(prod => {
+        const imgs = (prod as any).product_images || [];
+        const sortedImgs = [...imgs].sort((a, b) => a.position - b.position);
+        const primaryImg = sortedImgs.find(img => img.is_primary) || sortedImgs[0];
+
+        return {
+          ...prod,
+          image_url: primaryImg ? primaryImg.url : ((prod as any).image_url || null),
+          images: sortedImgs.length > 0 ? sortedImgs.map(img => img.url) : ((prod as any).images || [])
+        } as ProductRow;
+      });
+    } catch (err: any) {
+      console.error('Erro ao listar produtos ativos:', err.message);
+      return [];
+    }
+  },
+
+  /**
    * triggerRevalidation: Dispara a invalidação de cache do Next.js 15 sob demanda
    */
   async triggerRevalidation(id?: string) {
