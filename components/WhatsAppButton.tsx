@@ -3,11 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Sparkles, MessageCircle } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export function WhatsAppButton() {
   const [phoneNumber, setPhoneNumber] = useState('5575988313060');
   const [storeName, setStoreName] = useState('Luminar Joias');
   const [showHelper, setShowHelper] = useState(false);
+  const pathname = usePathname();
+
+  const isProductPage = pathname?.startsWith('/produto/');
 
   // Carrega as configurações VIP em tempo real da KV Store settings do Supabase (Zero Mocks)
   useEffect(() => {
@@ -40,8 +44,19 @@ export function WhatsAppButton() {
   const message = `Olá! Vim pela storefront da ${storeName} e gostaria de um atendimento personalizado Concierge sobre a coleção de alta joalheria.`;
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
+  // No mobile, se for página de produto, a action bar inferior (64px) fica visível.
+  // Portanto, elevamos o botão: 64px + 16px de margem + env(safe-area-inset-bottom).
+  // Se não for página de produto, margem menor padrão: 16px + env(safe-area-inset-bottom).
+  // No desktop (md:), usamos bottom-6.
+  const mobileBottomPadding = isProductPage 
+    ? 'calc(env(safe-area-inset-bottom) + 80px)' 
+    : 'calc(env(safe-area-inset-bottom) + 16px)';
+
   return (
-    <div className="fixed bottom-[84px] md:bottom-6 right-4 z-50 flex items-end justify-end pointer-events-none select-none">
+    <div 
+      className="fixed right-4 z-50 flex items-end justify-end pointer-events-none select-none md:!bottom-6 transition-all duration-300"
+      style={{ bottom: mobileBottomPadding }}
+    >
       
       {/* Helper message Concierge Dourada / Arestas 1px (Luxury style) */}
       <div 

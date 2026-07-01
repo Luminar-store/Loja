@@ -6,6 +6,7 @@ import { FadeIn } from '@/components/animations';
 import { AlertTriangle, Gem, PenTool, ShieldCheck } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
 import { ProductReviews } from '@/components/storefront/ProductReviews';
+import { ShippingCalculator } from '@/components/storefront/ShippingCalculator';
 import { supabase } from '@/lib/supabase';
 
 import type { Metadata } from 'next';
@@ -172,8 +173,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="w-full flex flex-col bg-[#131313]">
-      <div className="w-full max-w-7xl mx-auto px-6 md:px-16 pt-20 pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-32 pt-16">
+      <div className="w-full max-w-7xl mx-auto px-6 md:px-16 pt-28 md:pt-20 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-32 pt-8 md:pt-16">
           
           {/* Componente Client-side de Galeria Real (product_images) */}
           <section className="lg:col-span-7">
@@ -209,22 +210,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </FadeIn>
             )}
 
-            {/* Cálculo de Frete (Estético) */}
-            <FadeIn delay={0.3} direction="left" className="space-y-4 pt-6 border-t border-white/10">
-              <span className="font-sans text-[11px] font-bold tracking-widest uppercase block text-white/70">
-                Calcular Frete e Prazo
-              </span>
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="00000-000" 
-                  maxLength={9}
-                  className="bg-transparent border-b border-white/20 focus:border-[#f2ca50] outline-none py-2 px-1 flex-grow font-sans text-xs text-white transition-colors duration-300"
-                />
-                <button className="px-6 py-2 border border-[#f2ca50] text-[#f2ca50] font-sans text-[11px] font-bold tracking-widest uppercase hover:bg-[#f2ca50] hover:text-black transition-all duration-300 active:scale-95 cursor-pointer">
-                  Calcular
-                </button>
-              </div>
+            {/* Cálculo de Frete (Interativo) */}
+            <FadeIn delay={0.3} direction="left" className="w-full">
+              <ShippingCalculator />
             </FadeIn>
 
             {/* História e Ficha Técnica da Peça */}

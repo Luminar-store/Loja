@@ -25,6 +25,7 @@ export default function CheckoutPage() {
   const [shippingError, setShippingError] = useState<string | null>(null);
   const [selectedShipping, setSelectedShipping] = useState<any | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'pix'>('credit_card');
 
   // Referência do Timer de Debounce para Abandono de Carrinho (AUD-002)
   const abandonTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -256,14 +257,14 @@ export default function CheckoutPage() {
           <span className="text-[10px] font-sans font-bold tracking-[0.3em] text-[#D4AF37] uppercase">Finalização Segura</span>
           <h1 className="font-serif text-3xl sm:text-4xl uppercase tracking-[0.15em] text-white">Alta Joalheria</h1>
           <div className="w-12 h-[1px] bg-[#D4AF37]/40 mx-auto mt-4"></div>
-          <p className="font-sans text-white/40 text-xs mt-2 max-w-md mx-auto">Peças exclusivas confeccionadas artesanalmente em Ouro 18k sob encomenda (produção artesanal de 7 a 15 dias úteis).</p>
+          <p className="font-sans text-white/40 text-xs mt-2 max-w-2xl mx-auto px-4 leading-relaxed">Peças exclusivas confeccionadas artesanalmente em Ouro 18k sob encomenda (produção artesanal de 7 a 15 dias úteis).</p>
         </div>
 
         <form onSubmit={handleSubmit} autoComplete="on">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
             {/* Bloco de Formulários (Lado Esquerdo) */}
-            <div className="lg:col-span-7 space-y-12 sm:space-y-16">
+            <div className="lg:col-span-7 w-full space-y-12 sm:space-y-16">
               
               {/* 01 — CONTATO DO CLIENTE */}
               <motion.div 
@@ -277,34 +278,34 @@ export default function CheckoutPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="sm:col-span-2">
-                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">Nome Completo</label>
+                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">Nome Completo</label>
                     <input 
                       required 
                       name="name" 
                       value={name}
                       onChange={e => setName(e.target.value)}
                       autoComplete="name"
-                      className="w-full bg-transparent border-b border-white/20 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors font-sans rounded-none" 
+                      className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all duration-300 font-sans rounded-[2px]" 
                       placeholder="Nome para faturamento e laudo" 
                       type="text" 
                       maxLength={100} 
                     />
                   </div>
                   <div>
-                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">E-mail para Recibo</label>
+                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">E-mail para Recibo</label>
                     <input 
                       required 
                       name="email" 
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       autoComplete="email"
-                      className="w-full bg-transparent border-b border-white/20 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors font-sans rounded-none" 
+                      className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all duration-300 font-sans rounded-[2px]" 
                       placeholder="seuemail@luxo.com" 
                       type="email" 
                     />
                   </div>
                   <div>
-                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">WhatsApp Concierge</label>
+                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">WhatsApp Concierge</label>
                     <input 
                       required 
                       name="phone" 
@@ -312,7 +313,7 @@ export default function CheckoutPage() {
                       onChange={handlePhoneChange}
                       autoComplete="tel"
                       inputMode="tel"
-                      className="w-full bg-transparent border-b border-white/20 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors font-sans rounded-none" 
+                      className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all duration-300 font-sans rounded-[2px]" 
                       placeholder="(00) 00000-0000" 
                       type="tel" 
                     />
@@ -334,7 +335,7 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   {/* CEP */}
                   <div className="sm:col-span-1">
-                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">CEP</label>
+                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">CEP</label>
                     <input 
                       required 
                       name="cep" 
@@ -342,7 +343,7 @@ export default function CheckoutPage() {
                       onChange={handleCepChange} 
                       autoComplete="postal-code"
                       inputMode="numeric"
-                      className="w-full bg-transparent border-b border-white/20 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors font-sans rounded-none" 
+                      className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all duration-300 font-sans rounded-[2px]" 
                       placeholder="00000-000" 
                       type="text" 
                       maxLength={9} 
@@ -351,14 +352,14 @@ export default function CheckoutPage() {
 
                   {/* Rua */}
                   <div className="sm:col-span-2">
-                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">Logradouro / Endereço</label>
+                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">Logradouro / Endereço</label>
                     <input 
                       required 
                       name="street" 
                       value={addressData.street} 
                       onChange={(e) => setAddressData(d => ({ ...d, street: e.target.value }))} 
                       autoComplete="street-address"
-                      className="w-full bg-transparent border-b border-white/20 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors font-sans rounded-none" 
+                      className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all duration-300 font-sans rounded-[2px]" 
                       placeholder="Rua, Avenida, Praça..." 
                       type="text" 
                     />
@@ -366,11 +367,11 @@ export default function CheckoutPage() {
 
                   {/* Número */}
                   <div className="sm:col-span-1">
-                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">Número</label>
+                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">Número</label>
                     <input 
                       required 
                       name="number" 
-                      className="w-full bg-transparent border-b border-white/20 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors font-sans rounded-none" 
+                      className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all duration-300 font-sans rounded-[2px]" 
                       placeholder="123" 
                       type="text" 
                       maxLength={20} 
@@ -379,10 +380,10 @@ export default function CheckoutPage() {
 
                   {/* Complemento */}
                   <div className="sm:col-span-2">
-                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">Complemento</label>
+                    <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">Complemento</label>
                     <input 
                       name="complement" 
-                      className="w-full bg-transparent border-b border-white/20 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors font-sans rounded-none" 
+                      className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all duration-300 font-sans rounded-[2px]" 
                       placeholder="Apto, Casa, Bloco (Opcional)" 
                       type="text" 
                       maxLength={100} 
@@ -393,12 +394,12 @@ export default function CheckoutPage() {
                   {addressData.city && (
                     <div className="sm:col-span-3 grid grid-cols-3 gap-6">
                       <div className="col-span-2">
-                        <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">Cidade</label>
-                        <input readOnly value={addressData.city} className="w-full bg-transparent border-b border-white/10 py-2 text-sm text-white/50 cursor-not-allowed outline-none font-sans" type="text" />
+                        <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">Cidade</label>
+                        <input readOnly value={addressData.city} className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white/50 cursor-not-allowed outline-none font-sans rounded-[2px]" type="text" />
                       </div>
                       <div className="col-span-1">
-                        <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-1 uppercase">Estado</label>
-                        <input readOnly value={addressData.state} className="w-full bg-transparent border-b border-white/10 py-2 text-sm text-white/50 cursor-not-allowed outline-none font-sans" type="text" />
+                        <label className="text-[9px] font-sans font-bold text-[#D4AF37] tracking-[0.2em] block mb-2 uppercase">Estado</label>
+                        <input readOnly value={addressData.state} className="w-full bg-white/[0.02] border border-white/10 h-12 px-4 text-sm text-white/50 cursor-not-allowed outline-none font-sans rounded-[2px]" type="text" />
                       </div>
                     </div>
                   )}
@@ -478,31 +479,65 @@ export default function CheckoutPage() {
                   <span className="font-serif text-xl text-[#D4AF37] italic">03.</span>
                   <h2 className="font-sans text-[11px] font-bold tracking-[0.25em] uppercase text-white">Transação Segura</h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <button type="button" className="flex flex-col items-center justify-center gap-3 p-6 border border-[#D4AF37] bg-[#D4AF37]/[0.02] cursor-default rounded-[1px]">
-                    <CreditCard className="text-[#D4AF37] w-6 h-6" strokeWidth={1.2} />
-                    <span className="text-[9px] font-sans font-bold text-white tracking-[0.2em] uppercase">Cartão / PIX</span>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setPaymentMethod('credit_card')}
+                    className={`flex flex-col items-center justify-center gap-3 p-6 border transition-all duration-300 rounded-[2px] ${paymentMethod === 'credit_card' ? 'border-[#D4AF37] bg-[#D4AF37]/[0.05]' : 'border-white/10 bg-white/[0.01] hover:border-white/30'}`}
+                  >
+                    <CreditCard className={`${paymentMethod === 'credit_card' ? 'text-[#D4AF37]' : 'text-white/40'} w-6 h-6 transition-colors`} strokeWidth={1.2} />
+                    <span className={`text-[9px] font-sans font-bold tracking-[0.2em] uppercase transition-colors ${paymentMethod === 'credit_card' ? 'text-white' : 'text-white/40'}`}>Cartão</span>
                   </button>
-                  <button disabled type="button" className="flex flex-col items-center justify-center gap-3 p-6 border border-white/5 opacity-30 cursor-not-allowed rounded-[1px]">
-                    <QrCode className="text-white/40 w-6 h-6" strokeWidth={1.2} />
-                    <span className="text-[9px] font-sans font-bold text-white/40 tracking-[0.2em] uppercase">PIX Direto</span>
-                  </button>
-                  <button disabled type="button" className="flex flex-col items-center justify-center gap-3 p-6 border border-white/5 opacity-30 cursor-not-allowed rounded-[1px]">
-                    <Barcode className="text-white/40 w-6 h-6" strokeWidth={1.2} />
-                    <span className="text-[9px] font-sans font-bold text-white/40 tracking-[0.2em] uppercase">Boleto VIP</span>
+                  <button 
+                    type="button" 
+                    onClick={() => setPaymentMethod('pix')}
+                    className={`flex flex-col items-center justify-center gap-3 p-6 border transition-all duration-300 rounded-[2px] ${paymentMethod === 'pix' ? 'border-[#D4AF37] bg-[#D4AF37]/[0.05]' : 'border-white/10 bg-white/[0.01] hover:border-white/30'}`}
+                  >
+                    <QrCode className={`${paymentMethod === 'pix' ? 'text-[#D4AF37]' : 'text-white/40'} w-6 h-6 transition-colors`} strokeWidth={1.2} />
+                    <span className={`text-[9px] font-sans font-bold tracking-[0.2em] uppercase transition-colors ${paymentMethod === 'pix' ? 'text-white' : 'text-white/40'}`}>PIX Direto</span>
                   </button>
                 </div>
-                <div className="p-4 bg-white/[0.02] border border-white/5 text-center rounded-none">
-                  <p className="font-sans text-white/60 text-xs leading-relaxed max-w-md mx-auto">
-                    Ao confirmar o pedido, você será redirecionado de forma encriptada para a página de checkout seguro da <strong className="text-white">InfinitePay</strong> para concluir seu pagamento em até 12x ou via PIX.
-                  </p>
+
+                <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[2px]">
+                  <AnimatePresence mode="wait">
+                    {paymentMethod === 'credit_card' ? (
+                      <motion.div 
+                        key="credit_card"
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-center space-y-4"
+                      >
+                        <Lock className="w-5 h-5 text-[#D4AF37] mx-auto opacity-70" strokeWidth={1.5} />
+                        <p className="font-sans text-white/70 text-xs leading-relaxed max-w-md mx-auto">
+                          Você será redirecionado para o ambiente criptografado da <strong className="text-white">InfinitePay</strong>. Lá, você poderá inserir com total segurança os dados do seu cartão de crédito e parcelar sua joia em até <strong className="text-[#D4AF37]">12x</strong>.
+                        </p>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key="pix"
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-center space-y-4"
+                      >
+                        <QrCode className="w-5 h-5 text-[#D4AF37] mx-auto opacity-70" strokeWidth={1.5} />
+                        <p className="font-sans text-white/70 text-xs leading-relaxed max-w-md mx-auto">
+                          Ao confirmar seu pedido, um <strong className="text-white">código PIX Copia e Cola</strong> (e QR Code) será gerado. O pagamento é processado instantaneamente, agilizando o início da produção artesanal da sua joia.
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </motion.div>
             </div>
 
             {/* Resumo do Pedido (Lado Direito - Fixo Estilo Shopify) */}
-            <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-8 pb-10">
-              <div className="bg-[#101010] border border-white/10 p-6 sm:p-8 space-y-6 rounded-[2px] shadow-lg">
+            <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-8 pb-10 w-full min-w-0">
+              <div className="bg-[#101010] border border-white/10 p-6 sm:p-8 space-y-6 rounded-[2px] shadow-lg w-full">
                 <div className="flex justify-between items-center pb-4 border-b border-white/5">
                   <h2 className="font-sans text-[11px] font-bold tracking-[0.2em] uppercase text-[#D4AF37]">Joias Solicitadas ({items.length})</h2>
                   <Link href="/categoria" className="text-[9px] font-sans text-white/40 hover:text-white uppercase tracking-widest transition-colors">Ajustar</Link>
@@ -597,7 +632,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Rodapé de checkout fixo */}
-          <footer className="fixed bottom-0 left-0 w-full bg-[#090909] border-t border-[#D4AF37]/30 h-[88px] z-50 px-4 sm:px-12 flex items-center justify-between shadow-[0_-20px_40px_rgba(0,0,0,0.8)]">
+          <footer className="fixed bottom-0 left-0 w-full bg-[#090909] border-t border-[#D4AF37]/30 h-auto min-h-[88px] z-50 px-4 sm:px-12 flex items-center justify-between shadow-[0_-20px_40px_rgba(0,0,0,0.8)] pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4">
             <div className="hidden sm:flex flex-col">
               <span className="text-[9px] font-sans font-bold text-white/40 tracking-widest uppercase">Total a pagar</span>
               <span className="text-xl font-serif text-[#D4AF37]">{formatPrice(finalTotal)}</span>
