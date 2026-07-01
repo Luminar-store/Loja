@@ -499,7 +499,7 @@ export default function CheckoutPage() {
                   </button>
                 </div>
 
-                <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[2px]">
+                <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[2px] w-full min-w-0">
                   <AnimatePresence mode="wait">
                     {paymentMethod === 'credit_card' ? (
                       <motion.div 
@@ -508,10 +508,10 @@ export default function CheckoutPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
                         transition={{ duration: 0.2 }}
-                        className="text-center space-y-4"
+                        className="text-center space-y-4 w-full min-w-0"
                       >
                         <Lock className="w-5 h-5 text-[#D4AF37] mx-auto opacity-70" strokeWidth={1.5} />
-                        <p className="font-sans text-white/70 text-xs leading-relaxed max-w-md mx-auto">
+                        <p className="font-sans text-white/70 text-xs leading-relaxed w-full">
                           Você será redirecionado para o ambiente criptografado da <strong className="text-white">InfinitePay</strong>. Lá, você poderá inserir com total segurança os dados do seu cartão de crédito e parcelar sua joia em até <strong className="text-[#D4AF37]">12x</strong>.
                         </p>
                       </motion.div>
@@ -522,10 +522,10 @@ export default function CheckoutPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
                         transition={{ duration: 0.2 }}
-                        className="text-center space-y-4"
+                        className="text-center space-y-4 w-full min-w-0"
                       >
                         <QrCode className="w-5 h-5 text-[#D4AF37] mx-auto opacity-70" strokeWidth={1.5} />
-                        <p className="font-sans text-white/70 text-xs leading-relaxed max-w-md mx-auto">
+                        <p className="font-sans text-white/70 text-xs leading-relaxed w-full">
                           Ao confirmar seu pedido, um <strong className="text-white">código PIX Copia e Cola</strong> (e QR Code) será gerado. O pagamento é processado instantaneamente, agilizando o início da produção artesanal da sua joia.
                         </p>
                       </motion.div>

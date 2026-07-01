@@ -95,10 +95,10 @@ export function ShippingCalculator() {
         <div className="p-4 bg-white/5 border border-white/10 space-y-2">
           <div className="flex items-center gap-2 text-[#f2ca50] mb-2">
             <Truck className="w-4 h-4" />
-            <span className="font-sans text-[10px] font-bold uppercase tracking-widest">Opções de Entrega</span>
+            <span className="font-sans text-[10px] font-bold uppercase tracking-widest">Frete Calculado</span>
           </div>
           <p className="text-white/60 text-xs font-sans font-light leading-relaxed">
-            As opções detalhadas de frete (Sedex, PAC e Transportadora) e seus respectivos prazos estarão disponíveis na próxima etapa do <strong>Checkout</strong>, com base no peso real da joia e seguro embutido.
+            Os valores e prazos finais serão apresentados de forma segura na etapa de Checkout, considerando o destino, o transporte especializado e o seguro completo da joia.
           </p>
         </div>
       )}

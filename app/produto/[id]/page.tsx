@@ -5,7 +5,7 @@ import { ProductGallery } from '@/components/storefront/ProductGallery';
 import { FadeIn } from '@/components/animations';
 import { AlertTriangle, Gem, PenTool, ShieldCheck } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
-import { ProductReviews } from '@/components/storefront/ProductReviews';
+
 import { ShippingCalculator } from '@/components/storefront/ShippingCalculator';
 import { supabase } from '@/lib/supabase';
 
@@ -270,11 +270,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           </section>
-        </FadeIn>
-
-        {/* Prova Social e Avaliações de Luxo */}
-        <FadeIn direction="up">
-          <ProductReviews productId={product.id} productName={product.name} />
         </FadeIn>
       </div>
 

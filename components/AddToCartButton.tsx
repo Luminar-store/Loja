@@ -57,7 +57,7 @@ export function AddToCartButton({ product, isBottomBar, selectedOptions, current
       }`}
       disabled={isAdding || product.status === 'Esgotado'}
     >
-      {product.status === 'Esgotado' ? 'Esgotado' : (isAdding ? 'Adicionando...' : `Adicionar à Seleção — ${formatPrice(displayPrice)}`)}
+      {product.status === 'Esgotado' ? 'Esgotado' : (isAdding ? 'Adicionando...' : `Adicionar ao carrinho — ${formatPrice(displayPrice)}`)}
     </button>
   );
 }
