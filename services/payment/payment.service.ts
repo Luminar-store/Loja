@@ -7,28 +7,20 @@ export const paymentService = {
   /**
    * processCheckout: Valida consistência financeira no servidor e gera o Link de Pagamento.
    */
-  async processCheckout(orderId: string): Promise<string> {
+  async processCheckout(order: any, orderItems: any[]): Promise<string> {
     try {
-      // 1. Carrega o pedido do banco de dados
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+      console.log(`[PaymentService] processCheckout iniciado para orderId:`, order?.id);
+      console.log(`[PaymentService] Utilizando pedido retornado pelo insert:`, order ? 'Sim' : 'Não');
+      console.log(`[PaymentService] Quantidade de itens recebidos:`, orderItems?.length);
 
-      if (orderError || !order) {
-        throw new Error(`Pedido não encontrado: ${orderError?.message || ''}`);
+      if (!order) {
+        throw new Error(`Pedido fornecido é inválido.`);
+      }
+      if (!orderItems || orderItems.length === 0) {
+        throw new Error(`Itens do pedido não fornecidos.`);
       }
 
-      // 2. Carrega os itens do pedido
-      const { data: orderItems, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('order_id', orderId);
-
-      if (itemsError || !orderItems || orderItems.length === 0) {
-        throw new Error(`Itens do pedido não encontrados: ${itemsError?.message || ''}`);
-      }
+      const orderId = order.id;
 
       // 3. Recalcular e validar a consistência financeira no servidor antes de enviar ao gateway (P3 - Hardening)
       let recalculatedSubtotal = 0;
@@ -149,25 +141,39 @@ export const paymentService = {
         return false;
       }
 
+      console.log("[Webhook] Gateway Reference:", referenceId);
+
       // 2. Localiza o pedido correspondente por gateway_reference
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .select('*')
         .eq('gateway_reference', referenceId)
-        .single();
+        .maybeSingle();
 
-      if (orderError || !order) {
-        console.error(`[Webhook Payment] Pedido com referência ${referenceId} não encontrado:`, orderError?.message);
+      if (orderError) {
+        console.error(`[Webhook Payment] Erro ao buscar pedido com referência ${referenceId}:`, orderError.message);
+        throw orderError;
+      }
+
+      if (!order) {
+        console.error(`[Webhook Payment] Pedido com referência ${referenceId} não encontrado.`);
         return false;
       }
 
+      console.log("[Webhook] Pedido encontrado:", order.id);
+
       // 3. Registra a transação de forma idempotente e previne processamento duplicado
-      const { data: existingTx } = await supabase
+      const { data: existingTx, error: txCheckError } = await supabase
         .from('payment_transactions')
         .select('*')
         .eq('transaction_id', referenceId)
         .eq('status', eventStatus)
-        .single();
+        .maybeSingle();
+
+      if (txCheckError) {
+        console.error(`[Webhook Payment] Erro ao checar transação existente:`, txCheckError.message);
+        throw txCheckError;
+      }
 
       if (existingTx) {
         console.warn(`[Webhook Payment] Callback duplicado ignorado (idempotência): Ref ${referenceId}, Status ${eventStatus}`);

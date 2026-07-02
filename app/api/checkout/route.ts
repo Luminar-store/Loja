@@ -110,7 +110,7 @@ export async function POST(req: Request) {
           browser_shipping_days: shipping.delivery_time
         }
       })
-      .select('id')
+      .select('*')
       .single();
 
     if (newOrderError || !newOrder) {
@@ -122,6 +122,7 @@ export async function POST(req: Request) {
     }
 
     const orderId = newOrder.id;
+    console.log("[Checkout] Novo pedido:", newOrder.id);
 
     // 6. Inserir os itens do pedido na tabela secundária 'order_items' (anti N+1)
     const itemsPayload = orderItemsToInsert.map(item => ({
@@ -129,9 +130,10 @@ export async function POST(req: Request) {
       order_id: orderId
     }));
 
-    const { error: itemsInsertError } = await supabase
+    const { data: insertedItems, error: itemsInsertError } = await supabase
       .from('order_items')
-      .insert(itemsPayload);
+      .insert(itemsPayload)
+      .select('*');
 
     if (itemsInsertError) {
       console.error('[Checkout] Erro ao gravar itens do pedido:', itemsInsertError.message);
@@ -140,9 +142,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Falha ao registrar itens do pedido.' }, { status: 500 });
     }
 
-    // 7. Chamar o paymentService para recalcular e gerar o checkout link seguro na InfinitePay
-    const checkoutUrl = await paymentService.processCheckout(orderId);
+    if (!insertedItems) {
+      await supabase.from('orders').delete().eq('id', orderId);
+      throw new Error("Itens do pedido não foram retornados após o insert.");
+    }
 
+    console.log("[Checkout] Itens criados:", insertedItems.length);
+
+
+    console.log("[Checkout] Iniciando criação da sessão InfinitePay");
+    // 7. Chamar o paymentService para recalcular e gerar o checkout link seguro na InfinitePay
+    const checkoutUrl = await paymentService.processCheckout(newOrder, insertedItems);
+
+    console.log("[Checkout] Checkout URL:", checkoutUrl);
+    console.log("[Checkout] Fluxo concluído com sucesso");
+    
     // 8. Retornar a URL para redirecionamento transparente e seguro
     return NextResponse.json({ success: true, checkout_url: checkoutUrl });
   } catch (error: any) {
