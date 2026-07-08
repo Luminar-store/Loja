@@ -61,6 +61,15 @@ export const paymentService = {
       const finalShippingPrice = Number(order.shipping_price) >= 0 ? Number(order.shipping_price) : 29.90;
       const finalTotalPrice = recalculatedSubtotal + finalShippingPrice;
 
+      if (finalShippingPrice > 0) {
+        const shippingName = order.metadata?.browser_shipping_name || 'Frete';
+        gatewayItems.push({
+          name: shippingName,
+          quantity: 1,
+          price: finalShippingPrice
+        });
+      }
+
       // Atualiza o pedido no banco de dados com os valores estritamente recalculados pelo servidor (Segurança P0)
       const { error: updateError } = await supabase
         .from('orders')
