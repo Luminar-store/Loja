@@ -4,12 +4,64 @@ import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/data';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { productService, ProductRow } from '@/services/product.service';
 import { X, Minus, Plus, ArrowRight } from 'lucide-react';
 
 export function CartDrawer() {
-  const { isOpen, closeCart, cartItems: items, removeFromCart: removeItem, increaseQuantity, decreaseQuantity, subtotal } = useCart();
+  const { isOpen, closeCart, cartItems: items, removeFromCart: removeItem, increaseQuantity, decreaseQuantity, subtotal, addToCart } = useCart();
   const [mounted, setMounted] = useState(false);
+  const [catalogProducts, setCatalogProducts] = useState<ProductRow[]>([]);
+
+  // Carrega produtos reais do catálogo da loja
+  useEffect(() => {
+    let isMounted = true;
+    const loadProducts = async () => {
+      try {
+        const data = await productService.listActiveProducts();
+        if (isMounted) {
+          setCatalogProducts(data || []);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar produtos recomendados para o carrinho:', err);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  // Recarrega/revalida quando o carrinho for aberto para refletir alterações da administração
+  useEffect(() => {
+    let isMounted = true;
+    if (isOpen) {
+      productService.listActiveProducts().then((data) => {
+        if (isMounted) {
+          setCatalogProducts(data || []);
+        }
+      }).catch((err) => {
+        console.error('Erro ao atualizar produtos recomendados para o carrinho:', err);
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  // Filtra recomendações elegíveis:
+  // 1. Apenas produtos ativos cadastrados no catálogo
+  // 2. Disponíveis (com estoque ou sob encomenda, não esgotados)
+  // 3. Exclui produtos que já estão no carrinho
+  // 4. Limita a 2 produtos para preservar o layout existente
+  const recommendedProducts = useMemo(() => {
+    return catalogProducts
+      .filter((p) => {
+        const isActive = (p.status || '').toLowerCase() === 'active';
+        const isNotSoldOut = p.status !== 'Esgotado' && (p.stock === null || p.stock > 0 || p.is_made_to_order);
+        const notInCart = !items.some((item) => item.id === p.id);
+        return isActive && isNotSoldOut && notInCart;
+      })
+      .slice(0, 2);
+  }, [catalogProducts, items]);
 
   // Fechar ao pressionar ESC
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -177,37 +229,40 @@ export function CartDrawer() {
               ))}
 
               {/* Upsell Section */}
-              <div className="pt-8 border-t border-white/5">
-                <h4 className="font-sans font-bold text-[11px] text-white/40 tracking-[0.2em] uppercase mb-6">Complete seu look</h4>
-                <div className="flex gap-3 md:gap-4">
-                  <div className="flex-1 bg-[#1c1b1b] p-3 md:p-4 border border-white/5 group cursor-pointer hover:border-[#D4AF37]/30 transition-colors duration-400">
-                    <div className="w-full aspect-square relative mb-4">
-                      <Image 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_2i7iJLfguxNoxZzd7ikl1JRJRfWyKULM5NyUF-p-3jBVT7vMslTyrsfCHirQsKo1oq1XzcxIFMWzipolhivjB-b97WN8VxyLK9BKulaZo4Cj0huiFLVfT9PH64PxdIHaPKLoSkC3xBiDsB3Ya3dHBK-0qTXkHTCqHI-vxAxqUcS6LIgcdpImt15KeYEWJcW2DK4ZmVcoXDOA3FRcFNF1LeBUVLDXbN7ob66wAc8vy33IFHrYnvmC0S5vRrJKSFOxkBN1DtHWA-g" 
-                        alt="Anel Solitário" 
-                        fill
-                        className="object-cover brightness-75 grayscale group-hover:grayscale-0 transition-all" 
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
-                    <p className="font-serif text-[10px] md:text-[12px] text-[#e5e2e1] text-center mb-1">Anel Solitário</p>
-                    <p className="font-sans font-bold text-[8px] md:text-[10px] text-[#D4AF37] tracking-widest uppercase text-center">R$ 4.500,00</p>
-                  </div>
-                  <div className="flex-1 bg-[#1c1b1b] p-3 md:p-4 border border-white/5 group cursor-pointer hover:border-[#D4AF37]/30 transition-colors duration-400">
-                    <div className="w-full aspect-square relative mb-4">
-                      <Image 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1f62-Jcg95DG4a6czAg2eLrEGHk2TtrfL48KNR7PTF1qrlm52uwPrykQZ2m1Jj9kLyiswHuoqah1a2FcK3RaPbtkuUPGS0S8ggR98uQCLsRjwRWgI8J0_SFONT78lB_O9qbY_KPm5chomQMWpvcQ_PKBEFl4xFaoH6gBk0rV3fL1cWJfEROZM0LBZhD8eCvlgA7Ln7WOedT0lwX26BFveLeN1kA_WPrmPYQRjaVUU171py5x1ZCtk_0AsKT0jvRYSd-p5CrEo89E" 
-                        alt="Kit Limpeza" 
-                        fill
-                        className="object-cover brightness-75 grayscale group-hover:grayscale-0 transition-all" 
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
-                    <p className="font-serif text-[10px] md:text-[12px] text-[#e5e2e1] text-center mb-1">Kit Cuidados</p>
-                    <p className="font-sans font-bold text-[8px] md:text-[10px] text-[#D4AF37] tracking-widest uppercase text-center">R$ 120,00</p>
+              {recommendedProducts.length > 0 && (
+                <div className="pt-8 border-t border-white/5">
+                  <h4 className="font-sans font-bold text-[11px] text-white/40 tracking-[0.2em] uppercase mb-6">Complete seu look</h4>
+                  <div className="flex gap-3 md:gap-4">
+                    {recommendedProducts.map((product) => {
+                      const imageUrl = product.image_url || (product.images && product.images.length > 0 ? product.images[0] : '/images/placeholder-premium.svg');
+                      const displayPrice = product.promotional_price || product.price;
+
+                      return (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => addToCart(product)}
+                          title={`Adicionar ${product.name} ao carrinho`}
+                          aria-label={`Adicionar ${product.name} ao carrinho`}
+                          className="flex-1 bg-[#1c1b1b] p-3 md:p-4 border border-white/5 group cursor-pointer hover:border-[#D4AF37]/30 transition-colors duration-400 text-left focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/50"
+                        >
+                          <div className="w-full aspect-square relative mb-4">
+                            <Image 
+                              src={imageUrl} 
+                              alt={product.name} 
+                              fill
+                              className="object-cover brightness-75 grayscale group-hover:grayscale-0 transition-all" 
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <p className="font-serif text-[10px] md:text-[12px] text-[#e5e2e1] text-center mb-1 line-clamp-1">{product.name}</p>
+                          <p className="font-sans font-bold text-[8px] md:text-[10px] text-[#D4AF37] tracking-widest uppercase text-center">{formatPrice(displayPrice)}</p>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
